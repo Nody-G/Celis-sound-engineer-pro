@@ -140,25 +140,170 @@ function getAudioAnalyser() {
     return analyserNode;
 }
 
+// ============================================================================
+// MODULE DSP & CHAÎNE DE TRAITEMENT D'EFFETS AUDIO TEMPS RÉEL
+// ============================================================================
+
+/**
+ * Génère une table de distorsion pour l'effet Overdrive / Saturation Lampe.
+ */
+function makeDistortionCurve(amount = 20) {
+    const k = typeof amount === 'number' ? amount : 20;
+    const n_samples = 44100;
+    const curve = new Float32Array(n_samples);
+    const deg = Math.PI / 180;
+    for (let i = 0; i < n_samples; ++i) {
+        const x = (i * 2) / n_samples - 1;
+        curve[i] = ((3 + k) * x * 20 * deg) / (Math.PI + k * Math.abs(x));
+    }
+    return curve;
+}
+
+/**
+ * Crée la chaîne de traitement DSP temps réel pour un instrument donné :
+ * Volume, Panoramique, Filtre/EQ (Passe-bas/haut/bande + Cutoff + Résonance),
+ * Drive/Saturation Lampe, Delay/Écho avec feedback, et Réverbération spatiale.
+ */
+function createTrackDspChain(trackId, now, duration = 0.5) {
+    if (!audioCtx) return sfxGain;
+
+    const settings = (typeof getInstrumentTrackSettings === 'function') 
+        ? getInstrumentTrackSettings(trackId) 
+        : null;
+
+    if (!settings) return sfxGain;
+
+    // Gestion Mute & Solo
+    const isAnySolo = (typeof isAnyTrackSoloed === 'function') && isAnyTrackSoloed();
+    const isMuted = settings.mute || (isAnySolo && !settings.solo);
+    if (isMuted) {
+        const silentNode = audioCtx.createGain();
+        silentNode.gain.setValueAtTime(0, now);
+        silentNode.connect(sfxGain);
+        return silentNode;
+    }
+
+    const inputNode = audioCtx.createGain();
+    inputNode.gain.setValueAtTime(1.0, now);
+    let currentNode = inputNode;
+
+    // 1. Saturation Lampe / Overdrive (WaveShaper)
+    if (settings.drive && settings.drive > 0.02) {
+        const driveAmount = settings.drive * 45;
+        const shaper = audioCtx.createWaveShaper();
+        shaper.curve = makeDistortionCurve(driveAmount);
+        shaper.oversample = '4x';
+        currentNode.connect(shaper);
+        currentNode = shaper;
+    }
+
+    // 2. Égaliseur & Filtre Biquad (Low-Pass, High-Pass, Band-Pass)
+    if (settings.cutoff && (settings.cutoff < 19500 || settings.filterType !== 'lowpass' || (settings.resonance && settings.resonance > 1.2))) {
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = settings.filterType || 'lowpass';
+        filter.frequency.setValueAtTime(Math.max(20, Math.min(20000, settings.cutoff || 20000)), now);
+        filter.Q.setValueAtTime(Math.max(0.1, Math.min(20, settings.resonance || 1.0)), now);
+        currentNode.connect(filter);
+        currentNode = filter;
+    }
+
+    // 3. Panoramique Stéréo (StereoPannerNode)
+    if (settings.pan && Math.abs(settings.pan) > 0.02 && audioCtx.createStereoPanner) {
+        const panner = audioCtx.createStereoPanner();
+        panner.pan.setValueAtTime(Math.max(-1, Math.min(1, settings.pan)), now);
+        currentNode.connect(panner);
+        currentNode = panner;
+    }
+
+    // 4. Send Delay / Écho Stéréo
+    if (settings.delay && settings.delay > 0.02) {
+        const delayTime = Math.max(0.05, Math.min(0.8, settings.delayTime || 0.25));
+        const delayNode = audioCtx.createDelay(1.0);
+        delayNode.delayTime.setValueAtTime(delayTime, now);
+
+        const feedback = audioCtx.createGain();
+        feedback.gain.setValueAtTime(Math.min(0.85, settings.delayFeedback || 0.4), now);
+
+        const delayWet = audioCtx.createGain();
+        delayWet.gain.setValueAtTime(settings.delay * 0.7 * soundVolume, now);
+
+        currentNode.connect(delayNode);
+        delayNode.connect(feedback);
+        feedback.connect(delayNode);
+        delayNode.connect(delayWet);
+        delayWet.connect(sfxGain);
+    }
+
+    // 5. Send Reverb / Espace (Multi-Tap Algorithmic Space)
+    if (settings.reverb && settings.reverb > 0.02) {
+        const reverbWet = audioCtx.createGain();
+        reverbWet.gain.setValueAtTime(settings.reverb * 0.65 * soundVolume, now);
+
+        const tapDelays = [0.031, 0.053, 0.079, 0.113, 0.167];
+        tapDelays.forEach((dt, i) => {
+            const tap = audioCtx.createDelay(0.5);
+            tap.delayTime.setValueAtTime(dt, now);
+            const tapGain = audioCtx.createGain();
+            tapGain.gain.setValueAtTime(Math.pow(0.68, i + 1), now);
+            currentNode.connect(tap);
+            tap.connect(tapGain);
+            tapGain.connect(reverbWet);
+        });
+
+        reverbWet.connect(sfxGain);
+    }
+
+    // 6. Master Volume de la piste
+    const outGain = audioCtx.createGain();
+    const trackVol = (typeof settings.volume === 'number') ? settings.volume : 1.0;
+    outGain.gain.setValueAtTime(trackVol, now);
+    currentNode.connect(outGain);
+    outGain.connect(sfxGain);
+
+    return inputNode;
+}
+
+function getTrackTransposedPitch(trackId, basePitch) {
+    if (typeof getInstrumentTrackSettings === 'function') {
+        const settings = getInstrumentTrackSettings(trackId);
+        if (settings && typeof settings.pitch === 'number' && settings.pitch !== 0) {
+            return basePitch * Math.pow(2, settings.pitch / 12);
+        }
+    }
+    return basePitch;
+}
+
+function getTrackOscillatorWaveform(trackId, defaultWave = 'sawtooth') {
+    if (typeof getInstrumentTrackSettings === 'function') {
+        const settings = getInstrumentTrackSettings(trackId);
+        if (settings && settings.waveform && settings.waveform !== 'default') {
+            return settings.waveform;
+        }
+    }
+    return defaultWave;
+}
+
 /**
  * Joue un coup de Kick percutant (Grosse caisse 808).
  */
 function playKickSound(pitch = 150) {
     if (!audioCtx || !isSoundEnabled) return;
     const now = audioCtx.currentTime;
+    const realPitch = getTrackTransposedPitch('kick', pitch);
+    const dspDest = createTrackDspChain('kick', now, 0.22);
 
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
 
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(pitch, now);
+    osc.type = getTrackOscillatorWaveform('kick', 'sine');
+    osc.frequency.setValueAtTime(realPitch, now);
     osc.frequency.exponentialRampToValueAtTime(30, now + 0.18);
 
     gain.gain.setValueAtTime(0.7 * soundVolume, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
 
     osc.connect(gain);
-    gain.connect(sfxGain);
+    gain.connect(dspDest);
 
     osc.start(now);
     osc.stop(now + 0.22);
@@ -170,17 +315,19 @@ function playKickSound(pitch = 150) {
 function playSnareSound() {
     if (!audioCtx || !isSoundEnabled) return;
     const now = audioCtx.currentTime;
+    const dspDest = createTrackDspChain('snare', now, 0.15);
 
     // Composante tonale
     const osc = audioCtx.createOscillator();
     const oscGain = audioCtx.createGain();
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(240, now);
+    const baseFreq = getTrackTransposedPitch('snare', 240);
+    osc.type = getTrackOscillatorWaveform('snare', 'triangle');
+    osc.frequency.setValueAtTime(baseFreq, now);
     osc.frequency.exponentialRampToValueAtTime(80, now + 0.1);
     oscGain.gain.setValueAtTime(0.4 * soundVolume, now);
     oscGain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
     osc.connect(oscGain);
-    oscGain.connect(sfxGain);
+    oscGain.connect(dspDest);
     osc.start(now);
     osc.stop(now + 0.12);
 
@@ -204,7 +351,7 @@ function playSnareSound() {
 
     noise.connect(noiseFilter);
     noiseFilter.connect(noiseGain);
-    noiseGain.connect(sfxGain);
+    noiseGain.connect(dspDest);
 
     noise.start(now);
     noise.stop(now + 0.15);
@@ -217,6 +364,7 @@ function playHiHatSound(open = false) {
     if (!audioCtx || !isSoundEnabled) return;
     const now = audioCtx.currentTime;
     const duration = open ? 0.25 : 0.05;
+    const dspDest = createTrackDspChain('hihat', now, duration);
 
     const bufferSize = audioCtx.sampleRate * duration;
     const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
@@ -238,7 +386,7 @@ function playHiHatSound(open = false) {
 
     noise.connect(filter);
     filter.connect(gain);
-    gain.connect(sfxGain);
+    gain.connect(dspDest);
 
     noise.start(now);
     noise.stop(now + duration);
@@ -259,23 +407,26 @@ function playSynthLeadSound(noteOrStep = 0) {
         freq = LEAD_NOTES[Math.abs(noteOrStep) % LEAD_NOTES.length] || 440;
     }
 
+    const realFreq = getTrackTransposedPitch('synth', freq);
+    const dspDest = createTrackDspChain('synth', now, 0.35);
+
     const osc = audioCtx.createOscillator();
     const filter = audioCtx.createBiquadFilter();
     const gain = audioCtx.createGain();
 
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(freq, now);
+    osc.type = getTrackOscillatorWaveform('synth', 'sawtooth');
+    osc.frequency.setValueAtTime(realFreq, now);
 
     filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(freq * 3.5, now);
-    filter.frequency.exponentialRampToValueAtTime(freq * 1.1, now + 0.3);
+    filter.frequency.setValueAtTime(realFreq * 3.5, now);
+    filter.frequency.exponentialRampToValueAtTime(realFreq * 1.1, now + 0.3);
 
     gain.gain.setValueAtTime(0.25 * soundVolume, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
 
     osc.connect(filter);
     filter.connect(gain);
-    gain.connect(sfxGain);
+    gain.connect(dspDest);
 
     osc.start(now);
     osc.stop(now + 0.35);
@@ -328,18 +479,21 @@ function playSubBassSound(noteOrStep = 0) {
         freq = notes[Math.abs(noteOrStep) % notes.length] || 55;
     }
 
+    const realFreq = getTrackTransposedPitch('bass', freq);
+    const dspDest = createTrackDspChain('bass', now, 0.45);
+
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
 
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(freq * 1.35, now);
-    osc.frequency.exponentialRampToValueAtTime(freq, now + 0.07);
+    osc.type = getTrackOscillatorWaveform('bass', 'sine');
+    osc.frequency.setValueAtTime(realFreq * 1.35, now);
+    osc.frequency.exponentialRampToValueAtTime(realFreq, now + 0.07);
 
     gain.gain.setValueAtTime(0.75 * soundVolume, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
 
     osc.connect(gain);
-    gain.connect(sfxGain);
+    gain.connect(dspDest);
 
     osc.start(now);
     osc.stop(now + 0.45);
@@ -351,6 +505,7 @@ function playSubBassSound(noteOrStep = 0) {
 function playClapSound() {
     if (!audioCtx || !isSoundEnabled) return;
     const now = audioCtx.currentTime;
+    const dspDest = createTrackDspChain('clap', now, 0.22);
 
     // 3 micro-rafales de bruit + déclin réverbéré
     [0, 0.012, 0.024].forEach((offset, idx) => {
@@ -373,7 +528,7 @@ function playClapSound() {
 
         noise.connect(filter);
         filter.connect(gain);
-        gain.connect(sfxGain);
+        gain.connect(dspDest);
 
         noise.start(now + offset);
         noise.stop(now + offset + 0.02);
@@ -399,7 +554,7 @@ function playClapSound() {
 
     tailNoise.connect(tailFilter);
     tailFilter.connect(tailGain);
-    tailGain.connect(sfxGain);
+    tailGain.connect(dspDest);
 
     tailNoise.start(now + 0.03);
     tailNoise.stop(now + 0.22);
@@ -411,6 +566,7 @@ function playClapSound() {
 function playChordPadSound(noteOrStep = 0) {
     if (!audioCtx || !isSoundEnabled) return;
     const now = audioCtx.currentTime;
+    const dspDest = createTrackDspChain('pad', now, 0.65);
 
     let chord = CHORD_FREQS[0];
     if (typeof noteOrStep === 'string') {
@@ -418,7 +574,6 @@ function playChordPadSound(noteOrStep = 0) {
         if (Array.isArray(res)) {
             chord = res;
         } else if (typeof res === 'number') {
-            // Construit un accord majeur/mineur doux à partir de la fondamentale
             chord = [res, res * 1.2599, res * 1.4983];
         }
     } else if (Array.isArray(noteOrStep)) {
@@ -428,12 +583,13 @@ function playChordPadSound(noteOrStep = 0) {
     }
 
     chord.forEach((freq, idx) => {
+        const realFreq = getTrackTransposedPitch('pad', freq * 0.5);
         const osc = audioCtx.createOscillator();
         const filter = audioCtx.createBiquadFilter();
         const gain = audioCtx.createGain();
 
-        osc.type = idx % 2 === 0 ? 'sine' : 'triangle';
-        osc.frequency.setValueAtTime(freq * 0.5, now);
+        osc.type = getTrackOscillatorWaveform('pad', idx % 2 === 0 ? 'sine' : 'triangle');
+        osc.frequency.setValueAtTime(realFreq, now);
 
         filter.type = 'lowpass';
         filter.frequency.setValueAtTime(800, now);
@@ -444,7 +600,7 @@ function playChordPadSound(noteOrStep = 0) {
 
         osc.connect(filter);
         filter.connect(gain);
-        gain.connect(sfxGain);
+        gain.connect(dspDest);
 
         osc.start(now);
         osc.stop(now + 0.65);
@@ -467,24 +623,27 @@ function playAcidSound(noteOrStep = 0) {
         freq = notes[Math.abs(noteOrStep) % notes.length] || 110;
     }
 
+    const realFreq = getTrackTransposedPitch('acid', freq);
+    const dspDest = createTrackDspChain('acid', now, 0.28);
+
     const osc = audioCtx.createOscillator();
     const filter = audioCtx.createBiquadFilter();
     const gain = audioCtx.createGain();
 
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(freq, now);
+    osc.type = getTrackOscillatorWaveform('acid', 'sawtooth');
+    osc.frequency.setValueAtTime(realFreq, now);
 
     filter.type = 'lowpass';
     filter.Q.value = 12; // Résonance acide prononcée
-    filter.frequency.setValueAtTime(freq * 8, now);
-    filter.frequency.exponentialRampToValueAtTime(freq * 1.5, now + 0.25);
+    filter.frequency.setValueAtTime(realFreq * 8, now);
+    filter.frequency.exponentialRampToValueAtTime(realFreq * 1.5, now + 0.25);
 
     gain.gain.setValueAtTime(0.28 * soundVolume, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
 
     osc.connect(filter);
     filter.connect(gain);
-    gain.connect(sfxGain);
+    gain.connect(dspDest);
 
     osc.start(now);
     osc.stop(now + 0.28);
@@ -505,17 +664,20 @@ function playPianoSound(noteOrStep = 0) {
         freq = LEAD_NOTES[Math.abs(noteOrStep) % LEAD_NOTES.length] || 261.63;
     }
 
+    const realFreq = getTrackTransposedPitch('piano', freq);
+    const dspDest = createTrackDspChain('piano', now, 0.65);
+
     // Oscillateur fondamental
     const osc1 = audioCtx.createOscillator();
     const gain1 = audioCtx.createGain();
-    osc1.type = 'sine';
-    osc1.frequency.setValueAtTime(freq, now);
+    osc1.type = getTrackOscillatorWaveform('piano', 'sine');
+    osc1.frequency.setValueAtTime(realFreq, now);
 
     // Harmonique 2 pour la richesse du timbre feutré
     const osc2 = audioCtx.createOscillator();
     const gain2 = audioCtx.createGain();
     osc2.type = 'triangle';
-    osc2.frequency.setValueAtTime(freq * 2, now);
+    osc2.frequency.setValueAtTime(realFreq * 2, now);
 
     const masterPianoGain = audioCtx.createGain();
 
@@ -529,7 +691,7 @@ function playPianoSound(noteOrStep = 0) {
     osc2.connect(gain2);
     gain1.connect(masterPianoGain);
     gain2.connect(masterPianoGain);
-    masterPianoGain.connect(sfxGain);
+    masterPianoGain.connect(dspDest);
 
     osc1.start(now);
     osc2.start(now);
@@ -552,16 +714,19 @@ function playPluckSound(noteOrStep = 0) {
         freq = (LEAD_NOTES[Math.abs(noteOrStep) % LEAD_NOTES.length] || 261.63) * 1.5;
     }
 
+    const realFreq = getTrackTransposedPitch('pluck', freq);
+    const dspDest = createTrackDspChain('pluck', now, 0.18);
+
     const osc = audioCtx.createOscillator();
     const filter = audioCtx.createBiquadFilter();
     const gain = audioCtx.createGain();
 
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(freq, now);
+    osc.type = getTrackOscillatorWaveform('pluck', 'square');
+    osc.frequency.setValueAtTime(realFreq, now);
 
     filter.type = 'bandpass';
-    filter.frequency.setValueAtTime(freq * 2.5, now);
-    filter.frequency.exponentialRampToValueAtTime(freq * 0.8, now + 0.15);
+    filter.frequency.setValueAtTime(realFreq * 2.5, now);
+    filter.frequency.exponentialRampToValueAtTime(realFreq * 0.8, now + 0.15);
     filter.Q.value = 5.0;
 
     gain.gain.setValueAtTime(0.3 * soundVolume, now);
@@ -569,7 +734,7 @@ function playPluckSound(noteOrStep = 0) {
 
     osc.connect(filter);
     filter.connect(gain);
-    gain.connect(sfxGain);
+    gain.connect(dspDest);
 
     osc.start(now);
     osc.stop(now + 0.18);
@@ -590,27 +755,29 @@ function playStringsSound(noteOrStep = 0) {
         freq = LEAD_NOTES[Math.abs(noteOrStep) % LEAD_NOTES.length] || 220;
     }
 
+    const realFreq = getTrackTransposedPitch('strings', freq);
+    const dspDest = createTrackDspChain('strings', now, 0.75);
+
     // Deux oscillateurs désaccordés pour un effet de violons d'ensemble
     [-4, 4].forEach(detuneCents => {
         const osc = audioCtx.createOscillator();
         const filter = audioCtx.createBiquadFilter();
         const gain = audioCtx.createGain();
 
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(freq, now);
+        osc.type = getTrackOscillatorWaveform('strings', 'sawtooth');
+        osc.frequency.setValueAtTime(realFreq, now);
         osc.detune.setValueAtTime(detuneCents, now);
 
         filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(freq * 2.2, now);
+        filter.frequency.setValueAtTime(realFreq * 2.2, now);
 
-        // Attaque douce crescendo
         gain.gain.setValueAtTime(0.01, now);
         gain.gain.linearRampToValueAtTime(0.15 * soundVolume, now + 0.12);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.75);
 
         osc.connect(filter);
         filter.connect(gain);
-        gain.connect(sfxGain);
+        gain.connect(dspDest);
 
         osc.start(now);
         osc.stop(now + 0.75);
@@ -632,25 +799,28 @@ function playBrassSound(noteOrStep = 0) {
         freq = LEAD_NOTES[Math.abs(noteOrStep) % LEAD_NOTES.length] || 220;
     }
 
+    const realFreq = getTrackTransposedPitch('brass', freq);
+    const dspDest = createTrackDspChain('brass', now, 0.35);
+
     const osc = audioCtx.createOscillator();
     const filter = audioCtx.createBiquadFilter();
     const gain = audioCtx.createGain();
 
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(freq, now);
+    osc.type = getTrackOscillatorWaveform('brass', 'sawtooth');
+    osc.frequency.setValueAtTime(realFreq, now);
 
     filter.type = 'lowpass';
     filter.Q.value = 3.5;
     filter.frequency.setValueAtTime(300, now);
-    filter.frequency.linearRampToValueAtTime(freq * 4.0, now + 0.05);
-    filter.frequency.exponentialRampToValueAtTime(freq * 1.5, now + 0.3);
+    filter.frequency.linearRampToValueAtTime(realFreq * 4.0, now + 0.05);
+    filter.frequency.exponentialRampToValueAtTime(realFreq * 1.5, now + 0.3);
 
     gain.gain.setValueAtTime(0.28 * soundVolume, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
 
     osc.connect(filter);
     filter.connect(gain);
-    gain.connect(sfxGain);
+    gain.connect(dspDest);
 
     osc.start(now);
     osc.stop(now + 0.35);
@@ -671,6 +841,9 @@ function playCosmicSound(noteOrStep = 0) {
         freq = LEAD_NOTES[Math.abs(noteOrStep) % LEAD_NOTES.length] || 164.81;
     }
 
+    const realFreq = getTrackTransposedPitch('cosmic', freq);
+    const dspDest = createTrackDspChain('cosmic', now, 0.85);
+
     // Oscillateur porteur + modulateur FM spatial
     const carrier = audioCtx.createOscillator();
     const modulator = audioCtx.createOscillator();
@@ -679,11 +852,11 @@ function playCosmicSound(noteOrStep = 0) {
     const gain = audioCtx.createGain();
 
     modulator.type = 'sine';
-    modulator.frequency.setValueAtTime(freq * 1.5, now);
-    modGain.gain.setValueAtTime(freq * 0.4, now);
+    modulator.frequency.setValueAtTime(realFreq * 1.5, now);
+    modGain.gain.setValueAtTime(realFreq * 0.4, now);
 
-    carrier.type = 'triangle';
-    carrier.frequency.setValueAtTime(freq, now);
+    carrier.type = getTrackOscillatorWaveform('cosmic', 'triangle');
+    carrier.frequency.setValueAtTime(realFreq, now);
 
     filter.type = 'lowpass';
     filter.frequency.setValueAtTime(400, now);
@@ -698,7 +871,7 @@ function playCosmicSound(noteOrStep = 0) {
     modGain.connect(carrier.frequency);
     carrier.connect(filter);
     filter.connect(gain);
-    gain.connect(sfxGain);
+    gain.connect(dspDest);
 
     modulator.start(now);
     carrier.start(now);

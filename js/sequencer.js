@@ -349,6 +349,235 @@ function shiftSequencerStepNote(trackId, stepIndex, semitoneDelta) {
     return newNote;
 }
 
+// ============================================================================
+// GESTION DES RÉGLAGES & EFFETS DSP PAR INSTRUMENT (CHANNEL STRIP)
+// ============================================================================
+
+const TRACK_FX_PRESETS = {
+    clean: {
+        name: '✨ Clean Studio',
+        volume: 1.0,
+        pan: 0.0,
+        pitch: 0,
+        filterType: 'lowpass',
+        cutoff: 20000,
+        resonance: 1.0,
+        drive: 0.0,
+        reverb: 0.0,
+        delay: 0.0,
+        delayTime: 0.25,
+        delayFeedback: 0.4,
+        waveform: 'default'
+    },
+    space_reverb: {
+        name: '🌌 Espace Reverb Hall',
+        volume: 1.0,
+        pan: 0.0,
+        pitch: 0,
+        filterType: 'lowpass',
+        cutoff: 14000,
+        resonance: 1.2,
+        drive: 0.0,
+        reverb: 0.70,
+        delay: 0.20,
+        delayTime: 0.35,
+        delayFeedback: 0.45,
+        waveform: 'default'
+    },
+    dub_delay: {
+        name: '⏱️ Dub Echo Delay',
+        volume: 1.0,
+        pan: -0.2,
+        pitch: 0,
+        filterType: 'bandpass',
+        cutoff: 2200,
+        resonance: 3.0,
+        drive: 0.15,
+        reverb: 0.25,
+        delay: 0.65,
+        delayTime: 0.375,
+        delayFeedback: 0.65,
+        waveform: 'default'
+    },
+    warm_vintage: {
+        name: '🔥 Saturation Lampe Vintage',
+        volume: 1.1,
+        pan: 0.0,
+        pitch: 0,
+        filterType: 'lowpass',
+        cutoff: 7500,
+        resonance: 1.8,
+        drive: 0.50,
+        reverb: 0.20,
+        delay: 0.10,
+        delayTime: 0.20,
+        delayFeedback: 0.35,
+        waveform: 'default'
+    },
+    acid_crunch: {
+        name: '⚡ Acid Overdrive Crunch',
+        volume: 0.95,
+        pan: 0.15,
+        pitch: 0,
+        filterType: 'lowpass',
+        cutoff: 4000,
+        resonance: 8.5,
+        drive: 0.80,
+        reverb: 0.15,
+        delay: 0.30,
+        delayTime: 0.18,
+        delayFeedback: 0.50,
+        waveform: 'sawtooth'
+    },
+    wide_chorus: {
+        name: '🌊 Chorus Dimension 80s',
+        volume: 1.0,
+        pan: 0.0,
+        pitch: 0,
+        filterType: 'highpass',
+        cutoff: 220,
+        resonance: 1.0,
+        drive: 0.05,
+        reverb: 0.40,
+        delay: 0.25,
+        delayTime: 0.22,
+        delayFeedback: 0.40,
+        waveform: 'default'
+    },
+    lofi_tape: {
+        name: '📼 Cassette Lo-Fi Tape',
+        volume: 1.05,
+        pan: -0.1,
+        pitch: 0,
+        filterType: 'lowpass',
+        cutoff: 3200,
+        resonance: 2.2,
+        drive: 0.35,
+        reverb: 0.30,
+        delay: 0.20,
+        delayTime: 0.28,
+        delayFeedback: 0.45,
+        waveform: 'default'
+    }
+};
+
+/**
+ * Retourne les réglages par défaut d'une piste instrument.
+ */
+function getDefaultTrackSettings(trackId) {
+    return {
+        volume: 1.0,
+        pan: 0.0,
+        pitch: 0,
+        mute: false,
+        solo: false,
+        filterType: 'lowpass',
+        cutoff: 20000,
+        resonance: 1.0,
+        drive: 0.0,
+        reverb: 0.0,
+        delay: 0.0,
+        delayTime: 0.25,
+        delayFeedback: 0.4,
+        waveform: 'default'
+    };
+}
+
+/**
+ * Récupère les réglages d'effets d'un instrument.
+ */
+function getInstrumentTrackSettings(trackId) {
+    if (!GameState.sequencer) initSequencer();
+    if (!GameState.sequencer.trackSettings) GameState.sequencer.trackSettings = {};
+    if (!GameState.sequencer.trackSettings[trackId]) {
+        GameState.sequencer.trackSettings[trackId] = getDefaultTrackSettings(trackId);
+    }
+    return GameState.sequencer.trackSettings[trackId];
+}
+
+/**
+ * Met à jour un paramètre d'effet d'un instrument.
+ */
+function updateInstrumentTrackSetting(trackId, key, value) {
+    const settings = getInstrumentTrackSettings(trackId);
+    if (settings) {
+        settings[key] = value;
+        if (typeof updateSequencerUI === 'function') {
+            updateSequencerUI();
+        }
+    }
+}
+
+/**
+ * Bascule le Mute d'un instrument.
+ */
+function toggleTrackMute(trackId) {
+    const settings = getInstrumentTrackSettings(trackId);
+    settings.mute = !settings.mute;
+    if (typeof updateSequencerUI === 'function') {
+        updateSequencerUI();
+    }
+    return settings.mute;
+}
+
+/**
+ * Bascule le Solo d'un instrument.
+ */
+function toggleTrackSolo(trackId) {
+    const settings = getInstrumentTrackSettings(trackId);
+    settings.solo = !settings.solo;
+    if (typeof updateSequencerUI === 'function') {
+        updateSequencerUI();
+    }
+    return settings.solo;
+}
+
+/**
+ * Vérifie si au moins un instrument est en mode Solo.
+ */
+function isAnyTrackSoloed() {
+    if (!GameState.sequencer || !GameState.sequencer.trackSettings) return false;
+    return Object.values(GameState.sequencer.trackSettings).some(s => s && s.solo);
+}
+
+/**
+ * Vérifie si un instrument a des réglages ou effets personnalisés actifs.
+ */
+function hasTrackCustomFx(trackId) {
+    const s = getInstrumentTrackSettings(trackId);
+    if (!s) return false;
+    if (s.drive > 0.04 || s.reverb > 0.04 || s.delay > 0.04) return true;
+    if (s.cutoff < 18500 || s.filterType !== 'lowpass' || s.resonance > 1.4) return true;
+    if (Math.abs(s.pan) > 0.08 || s.pitch !== 0 || (s.waveform && s.waveform !== 'default')) return true;
+    if (s.volume !== 1.0) return true;
+    return false;
+}
+
+/**
+ * Applique un preset d'effet complet sur un instrument.
+ */
+function applyTrackFxPreset(trackId, presetKey) {
+    const preset = TRACK_FX_PRESETS[presetKey];
+    if (!preset) return;
+    const settings = getInstrumentTrackSettings(trackId);
+    Object.assign(settings, preset);
+    if (typeof updateSequencerUI === 'function') {
+        updateSequencerUI();
+    }
+}
+
+/**
+ * Réinitialise tous les réglages et effets d'un instrument.
+ */
+function resetTrackSettings(trackId) {
+    const defaults = getDefaultTrackSettings(trackId);
+    if (!GameState.sequencer.trackSettings) GameState.sequencer.trackSettings = {};
+    GameState.sequencer.trackSettings[trackId] = defaults;
+    if (typeof updateSequencerUI === 'function') {
+        updateSequencerUI();
+    }
+}
+
 // Presets de styles de production complets sur 13 pistes (sur 32 pas / 2 Mesures avec variations)
 const SEQUENCER_PRESETS = {
     house: {

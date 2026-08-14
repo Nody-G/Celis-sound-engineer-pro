@@ -97,7 +97,8 @@ function mergeGameState(loaded) {
             ...GameState.sequencer,
             ...loaded.sequencer,
             tracks: { ...(GameState.sequencer ? GameState.sequencer.tracks : {}), ...(loaded.sequencer.tracks || {}) },
-            stepNotes: { ...(GameState.sequencer ? GameState.sequencer.stepNotes : {}), ...(loaded.sequencer.stepNotes || {}) }
+            stepNotes: { ...(GameState.sequencer ? GameState.sequencer.stepNotes : {}), ...(loaded.sequencer.stepNotes || {}) },
+            trackSettings: { ...(GameState.sequencer ? GameState.sequencer.trackSettings : {}), ...(loaded.sequencer.trackSettings || {}) }
         };
     }
     if (loaded.padController) {

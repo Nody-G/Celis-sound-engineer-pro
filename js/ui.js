@@ -246,10 +246,22 @@ function initSequencerUI() {
         row.className = 'seq-track-row unlocked animate-unlock';
         row.dataset.track = inst.id;
 
+        const settings = (typeof getInstrumentTrackSettings === 'function') ? getInstrumentTrackSettings(inst.id) : {};
+        const hasFx = (typeof hasTrackCustomFx === 'function') && hasTrackCustomFx(inst.id);
+        const isMuted = !!settings.mute;
+        const isSolo = !!settings.solo;
+
         row.innerHTML = `
-            <button class="track-tag ${inst.color || 'cyan'}" title="Cliquez pour écouter ${inst.name}">
-                ${inst.icon} ${inst.tag}
-            </button>
+            <div class="seq-track-header">
+                <button class="track-tag ${inst.color || 'cyan'}" title="Cliquez pour écouter ${inst.name}">
+                    ${inst.icon} ${inst.tag}
+                </button>
+                <div class="track-quick-fx-btns">
+                    <button class="track-fx-btn ${hasFx ? 'has-fx' : ''}" data-track="${inst.id}" title="Ouvrir les Réglages & Effets DSP de ${inst.name}">🎛️ FX</button>
+                    <button class="track-mute-btn ${isMuted ? 'active' : ''}" data-track="${inst.id}" title="Couper le son (Mute)">M</button>
+                    <button class="track-solo-btn ${isSolo ? 'active' : ''}" data-track="${inst.id}" title="Écouter seul (Solo)">S</button>
+                </div>
+            </div>
             <div class="steps-row steps-${stepCount} view-${seqActivePage}" id="steps-${inst.id}"></div>
         `;
 
@@ -258,6 +270,32 @@ function initSequencerUI() {
             tagBtn.addEventListener('click', () => {
                 initAudio();
                 playTrackSound(inst.id);
+            });
+        }
+
+        const fxBtn = row.querySelector('.track-fx-btn');
+        if (fxBtn) {
+            fxBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openInstrumentFxModal(inst.id);
+            });
+        }
+
+        const muteBtn = row.querySelector('.track-mute-btn');
+        if (muteBtn) {
+            muteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleTrackMute(inst.id);
+                initSequencerUI();
+            });
+        }
+
+        const soloBtn = row.querySelector('.track-solo-btn');
+        if (soloBtn) {
+            soloBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleTrackSolo(inst.id);
+                initSequencerUI();
             });
         }
 
@@ -596,6 +634,151 @@ function openStepNotePicker(trackId, stepIndex, targetBtn, e) {
         document.addEventListener('click', handleOutsideStepPickerClick);
         document.addEventListener('keydown', handleStepPickerEscape);
     }, 10);
+}
+
+let activeFxTrackId = null;
+
+/**
+ * Ouvre la modale de réglages et d'effets DSP pour l'instrument sélectionné.
+ */
+function openInstrumentFxModal(trackId) {
+    activeFxTrackId = trackId;
+    const modal = document.getElementById('fx-modal');
+    if (!modal || typeof INSTRUMENT_DEFS === 'undefined') return;
+
+    const inst = INSTRUMENT_DEFS.find(i => i.id === trackId);
+    if (!inst) return;
+
+    const titleEl = document.getElementById('fx-modal-title');
+    const subtitleEl = document.getElementById('fx-modal-subtitle');
+    const iconEl = document.getElementById('fx-modal-icon');
+
+    if (titleEl) titleEl.textContent = `🎛️ ${inst.name}`;
+    if (subtitleEl) subtitleEl.textContent = `Piste [${inst.tag}] • Tranche de Mixage & Effets DSP`;
+    if (iconEl) iconEl.textContent = inst.icon;
+
+    // Affichage ou masquage de la carte de synthèse / forme d'onde
+    const synthCard = document.getElementById('fx-synth-card');
+    if (synthCard) {
+        synthCard.style.display = (inst.type === 'melodic') ? 'block' : 'none';
+    }
+
+    updateFxModalControls(trackId);
+    modal.classList.add('open');
+}
+
+/**
+ * Met à jour les curseurs et valeurs affichées dans la modale d'effets.
+ */
+function updateFxModalControls(trackId) {
+    if (typeof getInstrumentTrackSettings !== 'function') return;
+    const s = getInstrumentTrackSettings(trackId);
+    if (!s) return;
+
+    // Volume
+    const volSlider = document.getElementById('fx-volume-slider');
+    const volVal = document.getElementById('fx-volume-val');
+    if (volSlider) volSlider.value = Math.round((s.volume !== undefined ? s.volume : 1.0) * 100);
+    if (volVal) volVal.textContent = `${Math.round((s.volume !== undefined ? s.volume : 1.0) * 100)}%`;
+
+    // Pan
+    const panSlider = document.getElementById('fx-pan-slider');
+    const panVal = document.getElementById('fx-pan-val');
+    const panPct = Math.round((s.pan || 0) * 100);
+    if (panSlider) panSlider.value = panPct;
+    if (panVal) {
+        if (panPct < 0) panVal.textContent = `${Math.abs(panPct)}% G`;
+        else if (panPct > 0) panVal.textContent = `${panPct}% D`;
+        else panVal.textContent = 'Centre';
+    }
+
+    // Pitch
+    const pitchSlider = document.getElementById('fx-pitch-slider');
+    const pitchVal = document.getElementById('fx-pitch-val');
+    if (pitchSlider) pitchSlider.value = s.pitch || 0;
+    if (pitchVal) pitchVal.textContent = `${s.pitch > 0 ? '+' : ''}${s.pitch || 0} st`;
+
+    // Mute & Solo
+    const muteToggle = document.getElementById('fx-mute-toggle');
+    const soloToggle = document.getElementById('fx-solo-toggle');
+    if (muteToggle) {
+        if (s.mute) muteToggle.classList.add('active');
+        else muteToggle.classList.remove('active');
+    }
+    if (soloToggle) {
+        if (s.solo) soloToggle.classList.add('active');
+        else soloToggle.classList.remove('active');
+    }
+
+    // Filter Type Pills
+    const filterPills = document.querySelectorAll('.fx-filter-pill');
+    filterPills.forEach(pill => {
+        if (pill.dataset.type === (s.filterType || 'lowpass')) {
+            pill.classList.add('active');
+        } else {
+            pill.classList.remove('active');
+        }
+    });
+
+    // Cutoff
+    const cutoffSlider = document.getElementById('fx-cutoff-slider');
+    const cutoffVal = document.getElementById('fx-cutoff-val');
+    const cutoff = s.cutoff || 20000;
+    if (cutoffSlider) cutoffSlider.value = cutoff;
+    if (cutoffVal) cutoffVal.textContent = cutoff >= 1000 ? `${(cutoff / 1000).toFixed(1)} kHz` : `${cutoff} Hz`;
+
+    // Resonance
+    const resSlider = document.getElementById('fx-resonance-slider');
+    const resVal = document.getElementById('fx-resonance-val');
+    if (resSlider) resSlider.value = s.resonance || 1.0;
+    if (resVal) resVal.textContent = (s.resonance || 1.0).toFixed(1);
+
+    // Reverb
+    const revSlider = document.getElementById('fx-reverb-slider');
+    const revVal = document.getElementById('fx-reverb-val');
+    if (revSlider) revSlider.value = Math.round((s.reverb || 0) * 100);
+    if (revVal) revVal.textContent = `${Math.round((s.reverb || 0) * 100)}%`;
+
+    // Delay
+    const delaySlider = document.getElementById('fx-delay-slider');
+    const delayVal = document.getElementById('fx-delay-val');
+    if (delaySlider) delaySlider.value = Math.round((s.delay || 0) * 100);
+    if (delayVal) delayVal.textContent = `${Math.round((s.delay || 0) * 100)}%`;
+
+    // Delay Time
+    const dtSlider = document.getElementById('fx-delaytime-slider');
+    const dtVal = document.getElementById('fx-delaytime-val');
+    const dtMs = Math.round((s.delayTime || 0.25) * 1000);
+    const fbPct = Math.round((s.delayFeedback || 0.4) * 100);
+    if (dtSlider) dtSlider.value = dtMs;
+    if (dtVal) dtVal.textContent = `${dtMs} ms (${fbPct}% FB)`;
+
+    // Drive
+    const driveSlider = document.getElementById('fx-drive-slider');
+    const driveVal = document.getElementById('fx-drive-val');
+    if (driveSlider) driveSlider.value = Math.round((s.drive || 0) * 100);
+    if (driveVal) driveVal.textContent = `${Math.round((s.drive || 0) * 100)}%`;
+
+    // Waveform Pills
+    const wavePills = document.querySelectorAll('.fx-wave-pill');
+    wavePills.forEach(pill => {
+        if (pill.dataset.wave === (s.waveform || 'default')) {
+            pill.classList.add('active');
+        } else {
+            pill.classList.remove('active');
+        }
+    });
+}
+
+/**
+ * Ferme la modale d'effets DSP.
+ */
+function closeInstrumentFxModal() {
+    const modal = document.getElementById('fx-modal');
+    if (modal) modal.classList.remove('open');
+    if (typeof initSequencerUI === 'function') {
+        initSequencerUI();
+    }
 }
 
 /**
@@ -2013,6 +2196,139 @@ function initUI() {
         closeOfflineBtn.addEventListener('click', () => {
             offlineModal.classList.remove('open');
             if (typeof playCoinSound === 'function') playCoinSound();
+        });
+    }
+
+    // =========================================================================
+    // MODALE RACK D'EFFETS DSP & RÉGLAGES D'INSTRUMENT (CHANNEL STRIP)
+    // =========================================================================
+    const fxModal = document.getElementById('fx-modal');
+    const closeFxBtn = document.getElementById('close-fx-modal');
+    const fxApplyBtn = document.getElementById('fx-apply-btn');
+    const fxResetBtn = document.getElementById('fx-reset-btn');
+    const fxPreviewBtn = document.getElementById('fx-preview-btn');
+
+    if (closeFxBtn) closeFxBtn.addEventListener('click', closeInstrumentFxModal);
+    if (fxApplyBtn) fxApplyBtn.addEventListener('click', closeInstrumentFxModal);
+
+    if (fxPreviewBtn) {
+        fxPreviewBtn.addEventListener('click', () => {
+            if (activeFxTrackId) {
+                initAudio();
+                playTrackSound(activeFxTrackId);
+            }
+        });
+    }
+
+    if (fxResetBtn) {
+        fxResetBtn.addEventListener('click', () => {
+            if (activeFxTrackId && typeof resetTrackSettings === 'function') {
+                resetTrackSettings(activeFxTrackId);
+                updateFxModalControls(activeFxTrackId);
+                initAudio();
+                playTrackSound(activeFxTrackId);
+            }
+        });
+    }
+
+    // Sliders de réglages & effets
+    const fxSliders = [
+        { id: 'fx-volume-slider', key: 'volume', transform: v => v / 100, labelId: 'fx-volume-val', format: v => `${v}%` },
+        { id: 'fx-pan-slider', key: 'pan', transform: v => v / 100, labelId: 'fx-pan-val', format: v => v < 0 ? `${Math.abs(v)}% G` : v > 0 ? `${v}% D` : 'Centre' },
+        { id: 'fx-pitch-slider', key: 'pitch', transform: v => parseInt(v, 10), labelId: 'fx-pitch-val', format: v => `${v > 0 ? '+' : ''}${v} st` },
+        { id: 'fx-cutoff-slider', key: 'cutoff', transform: v => parseInt(v, 10), labelId: 'fx-cutoff-val', format: v => v >= 1000 ? `${(v / 1000).toFixed(1)} kHz` : `${v} Hz` },
+        { id: 'fx-resonance-slider', key: 'resonance', transform: v => parseFloat(v), labelId: 'fx-resonance-val', format: v => parseFloat(v).toFixed(1) },
+        { id: 'fx-reverb-slider', key: 'reverb', transform: v => v / 100, labelId: 'fx-reverb-val', format: v => `${v}%` },
+        { id: 'fx-delay-slider', key: 'delay', transform: v => v / 100, labelId: 'fx-delay-val', format: v => `${v}%` },
+        { id: 'fx-delaytime-slider', key: 'delayTime', transform: v => v / 1000, labelId: 'fx-delaytime-val', format: (v, slider) => {
+            const s = (activeFxTrackId && typeof getInstrumentTrackSettings === 'function') ? getInstrumentTrackSettings(activeFxTrackId) : {};
+            return `${v} ms (${Math.round((s.delayFeedback || 0.4) * 100)}% FB)`;
+        }},
+        { id: 'fx-drive-slider', key: 'drive', transform: v => v / 100, labelId: 'fx-drive-val', format: v => `${v}%` }
+    ];
+
+    fxSliders.forEach(item => {
+        const slider = document.getElementById(item.id);
+        const label = document.getElementById(item.labelId);
+        if (slider) {
+            slider.addEventListener('input', (e) => {
+                if (!activeFxTrackId) return;
+                const val = e.target.value;
+                if (label) label.textContent = item.format(val, slider);
+                if (typeof updateInstrumentTrackSetting === 'function') {
+                    updateInstrumentTrackSetting(activeFxTrackId, item.key, item.transform(val));
+                }
+            });
+        }
+    });
+
+    // Filtre Type Pills
+    const filterPills = document.querySelectorAll('.fx-filter-pill');
+    filterPills.forEach(pill => {
+        pill.addEventListener('click', () => {
+            if (!activeFxTrackId) return;
+            filterPills.forEach(p => p.classList.remove('active'));
+            pill.classList.add('active');
+            const type = pill.dataset.type;
+            if (typeof updateInstrumentTrackSetting === 'function') {
+                updateInstrumentTrackSetting(activeFxTrackId, 'filterType', type);
+                initAudio();
+                playTrackSound(activeFxTrackId);
+            }
+        });
+    });
+
+    // Waveform Pills
+    const wavePills = document.querySelectorAll('.fx-wave-pill');
+    wavePills.forEach(pill => {
+        pill.addEventListener('click', () => {
+            if (!activeFxTrackId) return;
+            wavePills.forEach(p => p.classList.remove('active'));
+            pill.classList.add('active');
+            const wave = pill.dataset.wave;
+            if (typeof updateInstrumentTrackSetting === 'function') {
+                updateInstrumentTrackSetting(activeFxTrackId, 'waveform', wave);
+                initAudio();
+                playTrackSound(activeFxTrackId);
+            }
+        });
+    });
+
+    // Presets Rapides
+    const presetTags = document.querySelectorAll('.fx-preset-tag');
+    presetTags.forEach(tag => {
+        tag.addEventListener('click', () => {
+            if (!activeFxTrackId) return;
+            const presetKey = tag.dataset.preset;
+            if (typeof applyTrackFxPreset === 'function') {
+                applyTrackFxPreset(activeFxTrackId, presetKey);
+                updateFxModalControls(activeFxTrackId);
+                initAudio();
+                playTrackSound(activeFxTrackId);
+            }
+        });
+    });
+
+    // Mute & Solo Toggles in modal
+    const muteToggle = document.getElementById('fx-mute-toggle');
+    if (muteToggle) {
+        muteToggle.addEventListener('click', () => {
+            if (activeFxTrackId && typeof toggleTrackMute === 'function') {
+                const muted = toggleTrackMute(activeFxTrackId);
+                if (muted) muteToggle.classList.add('active');
+                else muteToggle.classList.remove('active');
+            }
+        });
+    }
+
+    const soloToggle = document.getElementById('fx-solo-toggle');
+    if (soloToggle) {
+        soloToggle.addEventListener('click', () => {
+            if (activeFxTrackId && typeof toggleTrackSolo === 'function') {
+                const solo = toggleTrackSolo(activeFxTrackId);
+                if (solo) soloToggle.classList.add('active');
+                else soloToggle.classList.remove('active');
+            }
         });
     }
 
