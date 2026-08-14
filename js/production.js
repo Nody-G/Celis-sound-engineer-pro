@@ -77,11 +77,11 @@ function updateProduction(deltaTime) {
     const upgradeMultiplier = typeof getUpgradePassiveMultiplier === 'function' ? getUpgradePassiveMultiplier() : 1.0;
     const hypeMultiplier = (GameState.hype && GameState.hype.combo) ? GameState.hype.combo : 1.0;
     const grooveBonus = typeof calculateGrooveBonus === 'function' ? calculateGrooveBonus() : 1.0;
-    const artistBonus = typeof getArtistsPassiveBonus === 'function' ? getArtistsPassiveBonus() : 1.0;
-    const tapePerkBonus = (GameState.quests && GameState.quests.perks && GameState.quests.perks.master_tape) ? 1.2 : 1.0;
+    const acousticBonus = (GameState.quests && GameState.quests.perks && GameState.quests.perks.acoustic_mastery) ? 1.25 : 1.0;
+    const tapePerkBonus = ((GameState.quests && GameState.quests.perks && GameState.quests.perks.master_tape) ? 1.2 : 1.0) * acousticBonus;
 
     // Production totale des machines
-    const totalEffectiveProduction = equipmentBase * boosterMultiplier * upgradeMultiplier * hypeMultiplier * grooveBonus * artistBonus * tapePerkBonus;
+    const totalEffectiveProduction = equipmentBase * boosterMultiplier * upgradeMultiplier * hypeMultiplier * grooveBonus * tapePerkBonus;
 
     if (totalEffectiveProduction > 0) {
         addMoney(totalEffectiveProduction * deltaTime);
@@ -101,7 +101,6 @@ function updateProduction(deltaTime) {
 
     // 3. Sous-systèmes temps réel
     if (typeof updateHype === 'function') updateHype(deltaTime);
-    if (typeof updateArtists === 'function') updateArtists(deltaTime);
 }
 
 /**
@@ -113,10 +112,10 @@ function getPassiveProduction() {
     const upgradeMultiplier = typeof getUpgradePassiveMultiplier === 'function' ? getUpgradePassiveMultiplier() : 1.0;
     const hypeMultiplier = (GameState.hype && GameState.hype.combo) ? GameState.hype.combo : 1.0;
     const grooveBonus = typeof calculateGrooveBonus === 'function' ? calculateGrooveBonus() : 1.0;
-    const artistBonus = typeof getArtistsPassiveBonus === 'function' ? getArtistsPassiveBonus() : 1.0;
-    const tapePerkBonus = (GameState.quests && GameState.quests.perks && GameState.quests.perks.master_tape) ? 1.2 : 1.0;
+    const acousticBonus = (GameState.quests && GameState.quests.perks && GameState.quests.perks.acoustic_mastery) ? 1.25 : 1.0;
+    const tapePerkBonus = ((GameState.quests && GameState.quests.perks && GameState.quests.perks.master_tape) ? 1.2 : 1.0) * acousticBonus;
 
-    return equipmentBase * boosterMultiplier * upgradeMultiplier * hypeMultiplier * grooveBonus * artistBonus * tapePerkBonus;
+    return equipmentBase * boosterMultiplier * upgradeMultiplier * hypeMultiplier * grooveBonus * tapePerkBonus;
 }
 
 /**

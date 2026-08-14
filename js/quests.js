@@ -24,11 +24,11 @@ const QUEST_TEMPLATES = [
         reward: { moneyMult: 25, fame: 10, cassettes: 1 }
     },
     {
-        id: 'artist_missions',
-        title: '🎤 Manager de Choc',
-        description: 'Complétez 2 missions avec vos artistes signés.',
-        target: 2,
-        unit: 'missions',
+        id: 'golden_hunt',
+        title: '✨ Chasseur de Pépites',
+        description: 'Attrapez 1 Vinyle Doré éphémère lors d\'une session.',
+        target: 1,
+        unit: 'vinyle doré',
         reward: { moneyMult: 40, fame: 20, cassettes: 1 }
     },
     {
@@ -63,15 +63,12 @@ const CASSETTE_PERKS = [
         }
     },
     {
-        id: 'label_expansion',
-        name: '🏢 Extension de Label Major',
+        id: 'acoustic_mastery',
+        name: '🏛️ Traitement Acoustique Flottant',
         cost: 5,
-        icon: '🏢',
-        description: 'Agrandit votre label : permet de signer jusqu\'à **6 artistes simultanés** (au lieu de 4).',
-        apply: () => {
-            if (!GameState.artists) initArtists();
-            GameState.artists.maxSigned = 6;
-        }
+        icon: '🏛️',
+        description: 'Isolation sonore d\'exception sur ressorts : **+25% de Production globale permanente**.',
+        apply: () => {}
     },
     {
         id: 'master_tape',

@@ -555,6 +555,9 @@ function spawnGoldenVinyl() {
         }
 
         GameState.stats.goldenVinylsClicked = (GameState.stats.goldenVinylsClicked || 0) + 1;
+        if (typeof advanceQuestProgress === 'function') {
+            advanceQuestProgress('golden_hunt', 1);
+        }
 
         if (typeof spawnParticleBurst === 'function') {
             const rect = vinyl.getBoundingClientRect();

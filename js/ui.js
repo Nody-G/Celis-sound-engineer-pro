@@ -1065,244 +1065,7 @@ function updateEquipmentAffordability() {
     }
 }
 
-/**
- * Met à jour l'onglet Label & Artistes.
- */
-function updateArtistsDisplay() {
-    const signedGrid = document.getElementById('signed-artists-grid');
-    const availGrid = document.getElementById('available-artists-grid');
-    const rosterStatus = document.getElementById('artists-roster-status');
-    if (!signedGrid || !availGrid) return;
 
-    if (!GameState.artists) initArtists();
-
-    const signed = GameState.artists.signed || [];
-    const available = GameState.artists.available || [];
-    const maxCapacity = typeof getMaxSignedArtists === 'function' ? getMaxSignedArtists() : (GameState.artists.maxSigned || 4);
-
-    if (rosterStatus) {
-        rosterStatus.textContent = `${signed.length} / ${maxCapacity} Artistes Signés`;
-    }
-
-    // 1. Artistes signés
-    if (signed.length === 0) {
-        signedGrid.innerHTML = `<div class="empty-roster-banner">🎤 Aucun artiste signé pour le moment. Recrutez vos premiers talents ci-dessous !</div>`;
-    } else {
-        signedGrid.innerHTML = signed.map(artist => {
-            const expPct = Math.min(100, Math.round((artist.exp / artist.expToNext) * 100));
-            const isBusy = artist.isBusy && artist.currentMission;
-
-            let missionHtml = '';
-            if (isBusy) {
-                const timeLeftSec = Math.max(0, Math.ceil(artist.currentMission.timeLeft));
-                const progPct = Math.max(0, Math.min(100, 100 - (timeLeftSec / artist.currentMission.duration) * 100));
-                missionHtml = `
-                    <div class="artist-mission-active">
-                        <div class="mission-info-row">
-                            <span class="mission-name">⏳ ${artist.currentMission.name}</span>
-                            <span class="mission-timer">${timeLeftSec}s restantes</span>
-                        </div>
-                        <div class="mission-progress-bar-bg">
-                            <div class="mission-progress-bar-fill" style="width: ${progPct}%"></div>
-                        </div>
-                    </div>
-                `;
-            } else {
-                missionHtml = `
-                    <div class="artist-mission-buttons-grid">
-                        <button class="mission-action-btn" data-artist="${artist.id}" data-mission="studio_session">
-                            🎙️ Session (45s • 20⚡)
-                        </button>
-                        <button class="mission-action-btn" data-artist="${artist.id}" data-mission="viral_promo">
-                            📱 Promo (2m • 35⚡)
-                        </button>
-                        <button class="mission-action-btn highlight" data-artist="${artist.id}" data-mission="world_tour">
-                            🌍 Tournée (5m • 50⚡ • 2📼)
-                        </button>
-                    </div>
-                `;
-            }
-
-            const fireBuyout = Math.floor((artist.costMoney * 0.4) + (artist.level * 800));
-
-            return `
-                <div class="artist-card signed" id="artist-card-${artist.id}">
-                    <div class="artist-card-header">
-                        <span class="artist-avatar">${artist.avatar}</span>
-                        <div class="artist-identity">
-                            <h4 class="artist-name">${artist.name}</h4>
-                            <span class="artist-arch">${artist.archetype}</span>
-                        </div>
-                        <div class="artist-header-right">
-                            <span class="artist-level-pill">Niveau ${artist.level}</span>
-                            ${!isBusy ? `<button class="fire-artist-btn" data-id="${artist.id}" title="Résilier ce contrat (+${formatNumber(fireBuyout)} $)">❌ Libérer</button>` : ''}
-                        </div>
-                    </div>
-
-                    <div class="artist-stats-row">
-                        <span class="stat-badge">🎯 Talent : ${artist.talent}</span>
-                        <span class="stat-badge">🔥 Hype : ${artist.hype}</span>
-                    </div>
-
-                    <div class="artist-exp-container">
-                        <div class="exp-label-row">
-                            <span>Progression Niveau</span>
-                            <span>${artist.exp} / ${artist.expToNext} EXP</span>
-                        </div>
-                        <div class="exp-bar-bg">
-                            <div class="exp-bar-fill" style="width: ${expPct}%"></div>
-                        </div>
-                    </div>
-
-                    ${missionHtml}
-                </div>
-            `;
-        }).join('');
-
-        // Écouteurs pour lancer les missions
-        signedGrid.querySelectorAll('.mission-action-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                initAudio();
-                const artistId = btn.dataset.artist;
-                const missionId = btn.dataset.mission;
-                const res = startArtistMission(artistId, missionId);
-                if (res.success) {
-                    playContractSound();
-                } else {
-                    spawnFloatingText(`⚠️ ${res.reason}`, btn, false);
-                }
-            });
-        });
-
-        // Écouteurs pour libérer/résilier un contrat d'artiste
-        signedGrid.querySelectorAll('.fire-artist-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                initAudio();
-                const artistId = btn.dataset.id;
-                const res = fireArtist(artistId);
-                if (res.success) {
-                    spawnFloatingText(`💼 Artiste libéré (+${formatNumber(res.buyoutMoney)} $)`, document.getElementById('header'), true);
-                } else {
-                    spawnFloatingText(`⚠️ ${res.reason}`, btn, false);
-                }
-            });
-        });
-    }
-
-    // 2. Artistes disponibles
-    const isFull = signed.length >= maxCapacity;
-
-    availGrid.innerHTML = available.map(artist => {
-        const realCost = applyPrestigeCost(artist.costMoney);
-        const hasFame = GameState.resources.fame >= artist.reqFame;
-        const hasCash = hasEnoughMoney(realCost);
-        const canAfford = hasFame && hasCash && !isFull;
-
-        let btnLabel = '<span>Signer dans le Label</span>';
-        if (isFull) {
-            btnLabel = '<span>Écurie Pleine (Max)</span>';
-        }
-
-        return `
-            <div class="artist-card available ${canAfford ? 'affordable' : 'unaffordable'}" id="avail-artist-${artist.id}">
-                <div class="artist-card-header">
-                    <span class="artist-avatar">${artist.avatar}</span>
-                    <div class="artist-identity">
-                        <h4 class="artist-name">${artist.name}</h4>
-                        <span class="artist-arch">${artist.archetype}</span>
-                    </div>
-                </div>
-
-                <p class="artist-specialty">⭐ Spécialité : ${artist.specialty}</p>
-
-                <div class="artist-stats-row">
-                    <span class="stat-badge">🎯 Talent : ${artist.talent}</span>
-                    <span class="stat-badge">🔥 Hype : ${artist.hype}</span>
-                </div>
-
-                <button class="sign-artist-btn ${canAfford ? 'can-sign' : 'disabled'}" data-id="${artist.id}" ${canAfford ? '' : 'disabled'}>
-                    ${btnLabel}
-                    <small>${formatNumber(realCost)} $ • ${artist.reqFame} ⭐</small>
-                </button>
-            </div>
-        `;
-    }).join('');
-
-    availGrid.querySelectorAll('.sign-artist-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            initAudio();
-            const artistId = btn.dataset.id;
-            const res = signArtist(artistId);
-            if (res.success) {
-                if (typeof spawnParticleBurst === 'function') {
-                    const rect = btn.getBoundingClientRect();
-                    spawnParticleBurst(rect.left + rect.width / 2, rect.top + rect.height / 2, 20);
-                }
-                spawnFloatingText(`🎤 ${res.artist.name} a rejoint votre Label !`, btn, true);
-            } else {
-                spawnFloatingText(`⚠️ ${res.reason}`, btn, false);
-            }
-        });
-    });
-}
-
-/**
- * Met à jour dynamiquement l'accessibilité des recrutements d'artistes et des missions.
- */
-function updateArtistsAffordability() {
-    const availGrid = document.getElementById('available-artists-grid');
-    const rosterStatus = document.getElementById('artists-roster-status');
-    if (!availGrid) return;
-
-    const signed = (GameState.artists && GameState.artists.signed) ? GameState.artists.signed : [];
-    const available = (GameState.artists && GameState.artists.available) ? GameState.artists.available : [];
-    const maxCapacity = typeof getMaxSignedArtists === 'function' ? getMaxSignedArtists() : 4;
-    const isFull = signed.length >= maxCapacity;
-
-    if (rosterStatus) {
-        rosterStatus.textContent = `${signed.length} / ${maxCapacity} Artistes Signés`;
-    }
-
-    available.forEach(artist => {
-        const card = document.getElementById(`avail-artist-${artist.id}`);
-        const btn = availGrid.querySelector(`.sign-artist-btn[data-id="${artist.id}"]`);
-        if (!btn) return;
-
-        const realCost = applyPrestigeCost(artist.costMoney);
-        const hasFame = GameState.resources.fame >= artist.reqFame;
-        const hasCash = hasEnoughMoney(realCost);
-        const canAfford = hasFame && hasCash && !isFull;
-
-        btn.disabled = !canAfford;
-        btn.classList.toggle('can-sign', canAfford);
-        btn.classList.toggle('disabled', !canAfford);
-
-        const labelSpan = btn.querySelector('span');
-        if (labelSpan) {
-            labelSpan.textContent = isFull ? 'Écurie Pleine (Max)' : 'Signer dans le Label';
-        }
-
-        if (card) {
-            card.classList.toggle('affordable', canAfford);
-            card.classList.toggle('unaffordable', !canAfford);
-        }
-    });
-
-    // Mise à jour de l'accessibilité en énergie pour les missions
-    const signedGrid = document.getElementById('signed-artists-grid');
-    if (signedGrid) {
-        signedGrid.querySelectorAll('.mission-action-btn').forEach(btn => {
-            const missionId = btn.dataset.mission;
-            const missionDef = typeof ARTIST_MISSIONS !== 'undefined' ? ARTIST_MISSIONS.find(m => m.id === missionId) : null;
-            if (missionDef) {
-                const hasEnergy = hasEnoughEnergy(missionDef.costEnergy);
-                const hasCassettes = missionId === 'world_tour' ? (GameState.resources.goldenCassettes || 0) >= 2 : true;
-                const canLaunch = hasEnergy && hasCassettes;
-                btn.classList.toggle('energy-low', !canLaunch);
-            }
-        });
-    }
-}
 
 
 
@@ -1689,23 +1452,6 @@ function updateActiveTabDisplay() {
         updateEquipmentAffordability();
     } else if (tabId === 'upgrades') {
         updateUpgradesAffordability();
-    } else if (tabId === 'artists') {
-        if (GameState.artists && GameState.artists.signed) {
-            for (const artist of GameState.artists.signed) {
-                if (artist.isBusy && artist.currentMission) {
-                    const card = document.getElementById(`artist-card-${artist.id}`);
-                    if (card) {
-                        const timerEl = card.querySelector('.mission-timer');
-                        const fillEl = card.querySelector('.mission-progress-bar-fill');
-                        const timeLeftSec = Math.max(0, Math.ceil(artist.currentMission.timeLeft));
-                        const progPct = Math.max(0, Math.min(100, 100 - (timeLeftSec / artist.currentMission.duration) * 100));
-                        if (timerEl) timerEl.textContent = `${timeLeftSec}s restantes`;
-                        if (fillEl) fillEl.style.width = `${progPct}%`;
-                    }
-                }
-            }
-        }
-        updateArtistsAffordability();
     } else if (tabId === 'boosters') {
         updateBoostersAffordability();
     } else if (tabId === 'quests') {
@@ -1751,11 +1497,6 @@ function updateStatsDisplay() {
                 <span class="stat-card-icon">🔬</span>
                 <span class="stat-card-label">Améliorations R&D débloquées</span>
                 <strong class="stat-card-val gold">${stats.upgradesUnlocked || 0}</strong>
-            </div>
-            <div class="stat-dashboard-card">
-                <span class="stat-card-icon">🎤</span>
-                <span class="stat-card-label">Missions d'artistes accomplies</span>
-                <strong class="stat-card-val green">${stats.artistMissionsDone || 0}</strong>
             </div>
             <div class="stat-dashboard-card">
                 <span class="stat-card-icon">🎯</span>
@@ -1938,7 +1679,6 @@ function updateAllDisplay() {
     updateProductionDisplay();
     updateEquipmentDisplay();
     updateUpgradesDisplay();
-    updateArtistsDisplay();
     updateQuestsDisplay();
     updateBoostersDisplay();
     updateAchievementsDisplay();
@@ -2063,7 +1803,6 @@ function initUI() {
 
             if (tabId === 'equipment') updateEquipmentDisplay();
             if (tabId === 'upgrades') updateUpgradesDisplay();
-            if (tabId === 'artists') updateArtistsDisplay();
             if (tabId === 'quests') updateQuestsDisplay();
             if (tabId === 'boosters') updateBoostersDisplay();
             if (tabId === 'achievements') updateAchievementsDisplay();
