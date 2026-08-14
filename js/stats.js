@@ -6,7 +6,6 @@ function getDetailedStats() {
     const bonuses = getPrestigeBonuses();
     const passiveProduction = getPassiveProduction();
     const activeBoosters = getActiveBoostersList();
-    const albumRoyalties = typeof getTotalAlbumRoyalties === 'function' ? getTotalAlbumRoyalties() : 0;
 
     return {
         resources: {
@@ -20,28 +19,21 @@ function getDetailedStats() {
             boosterMultiplier: getBoosterProductionMultiplier(),
             upgradeMultiplier: typeof getUpgradePassiveMultiplier === 'function' ? getUpgradePassiveMultiplier() : 1.0,
             hypeMultiplier: (GameState.hype && GameState.hype.combo) ? GameState.hype.combo : 1.0,
-            albumRoyalties: albumRoyalties,
             activeBoosters: activeBoosters,
         },
         stats: {
             tracksMixed: GameState.stats.tracksMixed,
             totalMoneyEarned: GameState.stats.totalMoneyEarned,
             totalFameEarned: GameState.stats.totalFameEarned,
-            contractsCompleted: GameState.stats.contractsCompleted,
             boostersUsed: GameState.stats.boostersUsed || 0,
             eventsEncountered: GameState.stats.eventsEncountered || 0,
             upgradesUnlocked: GameState.stats.upgradesUnlocked || 0,
-            albumsReleased: GameState.stats.albumsReleased || 0,
             goldenVinylsClicked: GameState.stats.goldenVinylsClicked || 0,
         },
         equipment: {
             totalCount: getTotalEquipmentCount(),
             typesOwned: Object.keys(GameState.equipment).length,
             totalTypes: EQUIPMENT_DEFS.length,
-        },
-        contracts: {
-            completed: GameState.stats.contractsCompleted,
-            total: CONTRACT_DEFS.length,
         },
         achievements: {
             unlocked: getUnlockedAchievementsCount(),
@@ -79,32 +71,22 @@ function formatDuration(seconds) {
 
 function getOverallProgress() {
     let progress = 0;
-    let totalWeight = 0;
 
-    // Équipements (30%)
+    // Équipements (40%)
     const equipmentProgress = getTotalEquipmentCount() / 150;
-    progress += Math.min(equipmentProgress, 1) * 30;
-    totalWeight += 30;
+    progress += Math.min(equipmentProgress, 1) * 40;
 
-    // R&D (20%)
+    // R&D (25%)
     const upgradeProgress = (GameState.stats.upgradesUnlocked || 0) / (typeof UPGRADE_DEFS !== 'undefined' ? UPGRADE_DEFS.length : 12);
-    progress += Math.min(upgradeProgress, 1) * 20;
-    totalWeight += 20;
-
-    // Contrats (20%)
-    const contractProgress = GameState.stats.contractsCompleted / CONTRACT_DEFS.length;
-    progress += Math.min(contractProgress, 1) * 20;
-    totalWeight += 20;
+    progress += Math.min(upgradeProgress, 1) * 25;
 
     // Succès (20%)
     const achievementProgress = getUnlockedAchievementsCount() / getTotalAchievementsCount();
     progress += Math.min(achievementProgress, 1) * 20;
-    totalWeight += 20;
 
-    // Prestige (10%)
+    // Prestige (15%)
     const prestigeProgress = GameState.prestige.totalPrestiges / 5;
-    progress += Math.min(prestigeProgress, 1) * 10;
-    totalWeight += 10;
+    progress += Math.min(prestigeProgress, 1) * 15;
 
     return Math.min(progress, 100);
 }

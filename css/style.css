@@ -1089,7 +1089,8 @@ body {
     transition: width 0.2s ease;
 }
 
-.buy-equip-btn {
+.buy-equip-btn,
+.buy-button {
     width: 100%;
     background: linear-gradient(135deg, #1f2a48 0%, #151e36 100%);
     border: 1px solid var(--border-cyan);
@@ -1105,23 +1106,61 @@ body {
     transition: all 0.2s ease;
 }
 
-.buy-equip-btn strong { font-family: var(--font-mono); color: var(--neon-green); }
-
-.equipment-card.can-buy .buy-equip-btn {
-    background: linear-gradient(135deg, rgba(0, 242, 254, 0.2) 0%, rgba(79, 172, 254, 0.2) 100%);
-    border-color: var(--neon-cyan);
-    color: #fff;
-    box-shadow: 0 0 10px rgba(0, 242, 254, 0.25);
+.buy-equip-btn strong,
+.buy-button strong,
+.buy-button .buy-btn-cost {
+    font-family: var(--font-mono);
+    color: var(--neon-green);
+    font-weight: 700;
 }
 
-.equipment-card.can-buy .buy-equip-btn:hover {
+.equipment-card.can-buy .buy-equip-btn,
+.equipment-card.can-buy .buy-button,
+.equipment-card.affordable .buy-button.can-buy,
+.buy-equip-btn.can-buy,
+.buy-button.can-buy {
+    background: linear-gradient(135deg, rgba(0, 242, 254, 0.25) 0%, rgba(79, 172, 254, 0.25) 100%);
+    border-color: var(--neon-cyan);
+    color: #fff;
+    box-shadow: 0 0 12px rgba(0, 242, 254, 0.3);
+    cursor: pointer;
+}
+
+.equipment-card.can-buy .buy-equip-btn:hover:not(:disabled),
+.equipment-card.can-buy .buy-button:hover:not(:disabled),
+.equipment-card.affordable .buy-button.can-buy:hover:not(:disabled),
+.buy-equip-btn.can-buy:hover:not(:disabled),
+.buy-button.can-buy:hover:not(:disabled) {
     background: var(--neon-cyan);
     color: #070a1a;
     transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 242, 254, 0.5);
 }
 
-.equipment-card.can-buy .buy-equip-btn:hover strong { color: #070a1a; }
-.buy-equip-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.equipment-card.can-buy .buy-equip-btn:hover:not(:disabled) strong,
+.equipment-card.can-buy .buy-button:hover:not(:disabled) strong,
+.equipment-card.can-buy .buy-button:hover:not(:disabled) .buy-btn-cost,
+.buy-equip-btn.can-buy:hover:not(:disabled) strong,
+.buy-button.can-buy:hover:not(:disabled) .buy-btn-cost {
+    color: #070a1a;
+}
+
+.buy-equip-btn:disabled,
+.buy-button:disabled,
+.buy-equip-btn.disabled,
+.buy-button.disabled,
+.buy-button.cannot-buy {
+    opacity: 0.45;
+    cursor: not-allowed !important;
+    background: rgba(20, 25, 45, 0.6) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    box-shadow: none !important;
+    transform: none !important;
+}
+
+.equipment-card.unaffordable {
+    opacity: 0.85;
+}
 
 /* --------------------------------------------------------------------------
    11. Onglet R&D / Talents
@@ -1192,7 +1231,8 @@ body {
     line-height: 1.25;
 }
 
-.buy-upgrade-btn {
+.buy-upgrade-btn,
+.upgrade-buy-btn {
     background: linear-gradient(135deg, var(--neon-purple), var(--neon-blue));
     border: none;
     border-radius: var(--radius-sm);
@@ -1203,16 +1243,39 @@ body {
     text-align: center;
     white-space: nowrap;
     transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
 }
 
-.buy-upgrade-btn strong { font-family: var(--font-mono); color: var(--neon-gold); }
+.buy-upgrade-btn strong,
+.upgrade-buy-btn strong,
+.buy-upgrade-btn small,
+.upgrade-buy-btn small {
+    font-family: var(--font-mono);
+    color: var(--neon-gold);
+    font-weight: 700;
+}
 
-.buy-upgrade-btn:hover:not(:disabled) {
+.buy-upgrade-btn:hover:not(:disabled),
+.upgrade-buy-btn:hover:not(:disabled),
+.buy-upgrade-btn.can-buy:hover:not(:disabled),
+.upgrade-buy-btn.can-buy:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(121, 40, 202, 0.4);
+    box-shadow: 0 4px 15px rgba(121, 40, 202, 0.45);
 }
 
-.buy-upgrade-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.buy-upgrade-btn:disabled,
+.upgrade-buy-btn:disabled,
+.buy-upgrade-btn.disabled,
+.upgrade-buy-btn.disabled {
+    opacity: 0.45;
+    cursor: not-allowed !important;
+    transform: none !important;
+    box-shadow: none !important;
+    background: rgba(30, 30, 60, 0.5) !important;
+}
 
 .badge-bought {
     font-family: var(--font-mono);
@@ -1470,7 +1533,8 @@ body {
 .booster-name { font-family: var(--font-heading); font-size: 0.95rem; font-weight: 700; }
 .booster-desc { font-size: 0.8rem; color: var(--text-muted); }
 
-.buy-booster-btn {
+.buy-booster-btn,
+.booster-buy-btn {
     background: linear-gradient(135deg, var(--neon-cyan), var(--neon-blue));
     border: none;
     border-radius: var(--radius-sm);
@@ -1483,7 +1547,25 @@ body {
     transition: all 0.2s ease;
 }
 
-.buy-booster-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.buy-booster-btn:hover:not(:disabled),
+.booster-buy-btn:hover:not(:disabled),
+.buy-booster-btn.can-buy:hover:not(:disabled),
+.booster-buy-btn.can-buy:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 242, 254, 0.45);
+}
+
+.buy-booster-btn:disabled,
+.booster-buy-btn:disabled,
+.buy-booster-btn.disabled,
+.booster-buy-btn.disabled {
+    opacity: 0.45;
+    cursor: not-allowed !important;
+    transform: none !important;
+    box-shadow: none !important;
+    background: rgba(30, 40, 60, 0.5) !important;
+    color: var(--text-muted) !important;
+}
 
 .contract-card.completed {
     border-color: rgba(0, 255, 136, 0.4);
@@ -1507,7 +1589,8 @@ body {
 .status-badge.open { background: rgba(0, 242, 254, 0.2); color: var(--neon-cyan); }
 .status-badge.lock { background: rgba(255, 152, 0, 0.2); color: var(--neon-orange); }
 
-.contract-rewards-box {
+.contract-rewards-box,
+.contract-rewards-row {
     display: flex;
     justify-content: space-between;
     font-size: 0.78rem;
@@ -1516,7 +1599,8 @@ body {
     border-radius: var(--radius-sm);
 }
 
-.accept-contract-btn {
+.accept-contract-btn,
+.contract-action-btn {
     background: linear-gradient(135deg, var(--neon-green), #00c853);
     border: none;
     border-radius: var(--radius-sm);
@@ -1525,9 +1609,33 @@ body {
     padding: 10px;
     cursor: pointer;
     transition: all 0.2s ease;
+    text-align: center;
 }
 
-.accept-contract-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0, 255, 136, 0.4); }
+.accept-contract-btn:hover:not(:disabled),
+.contract-action-btn:hover:not(:disabled),
+.contract-action-btn.can-sign:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 255, 136, 0.45);
+}
+
+.accept-contract-btn:disabled,
+.contract-action-btn:disabled,
+.contract-action-btn.disabled {
+    opacity: 0.45;
+    cursor: not-allowed !important;
+    transform: none !important;
+    box-shadow: none !important;
+    background: rgba(30, 40, 50, 0.5) !important;
+    color: var(--text-muted) !important;
+}
+
+.contract-action-btn.done {
+    background: rgba(0, 255, 136, 0.15);
+    border: 1px solid var(--neon-green);
+    color: var(--neon-green);
+    cursor: default;
+}
 
 .achievement-card {
     flex-direction: row;
@@ -1748,30 +1856,67 @@ body {
 .juice-floating-text {
     position: fixed;
     pointer-events: none;
-    font-family: var(--font-mono);
-    font-size: 1.1rem;
-    font-weight: 900;
-    color: var(--neon-cyan);
-    text-shadow: 0 0 10px rgba(0, 242, 254, 0.8);
+    font-family: var(--font-heading);
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: #ffffff;
+    background: rgba(10, 14, 28, 0.92);
+    border: 1px solid var(--border-cyan);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.65), 0 0 14px rgba(0, 242, 254, 0.25);
+    padding: 7px 16px;
+    border-radius: var(--radius-full);
+    backdrop-filter: blur(10px);
     z-index: 99999;
-    animation: floatUpFade 1.2s forwards cubic-bezier(0.1, 0.8, 0.3, 1);
+    animation: floatUpFade 2.8s forwards ease-out;
     transform: translate(-50%, -50%);
     white-space: nowrap;
     will-change: transform, opacity;
+    letter-spacing: 0.3px;
 }
 
 .floating-text.special,
 .floating-text.crit,
 .juice-floating-text.crit {
-    font-size: 1.35rem;
+    font-size: 1.05rem;
     color: var(--neon-gold);
-    text-shadow: 0 0 15px rgba(255, 215, 0, 0.9);
+    border-color: var(--border-gold);
+    box-shadow: 0 8px 26px rgba(0, 0, 0, 0.75), 0 0 20px rgba(255, 215, 0, 0.4);
+    animation: floatUpFade 3.8s forwards ease-out;
+}
+
+.floating-text.warning {
+    color: #ff5555;
+    border-color: rgba(255, 85, 85, 0.6);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.75), 0 0 16px rgba(255, 85, 85, 0.35);
+    animation: floatUpFade 3.2s forwards ease-out;
+}
+
+.floating-text.simple-click {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    backdrop-filter: none;
+    padding: 0;
+    font-family: var(--font-mono);
+    font-size: 1.15rem;
+    font-weight: 900;
+    color: var(--neon-cyan);
+    text-shadow: 0 0 10px rgba(0, 242, 254, 0.85);
+    animation: floatUpFadeShort 1.4s forwards cubic-bezier(0.1, 0.8, 0.3, 1);
 }
 
 @keyframes floatUpFade {
-    0% { opacity: 1; transform: translate(-50%, 0) scale(0.85); }
-    30% { transform: translate(-50%, -20px) scale(1.1); }
-    100% { opacity: 0; transform: translate(-50%, -60px) scale(1); }
+    0% { opacity: 0; transform: translate(-50%, 8px) scale(0.88); }
+    8% { opacity: 1; transform: translate(-50%, -4px) scale(1.04); }
+    14% { transform: translate(-50%, 0) scale(1); }
+    80% { opacity: 1; transform: translate(-50%, -10px) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -28px) scale(0.96); }
+}
+
+@keyframes floatUpFadeShort {
+    0% { opacity: 1; transform: translate(-50%, 0) scale(0.9); }
+    30% { transform: translate(-50%, -20px) scale(1.15); }
+    100% { opacity: 0; transform: translate(-50%, -55px) scale(1); }
 }
 
 /* Vinyle Doré Volant */

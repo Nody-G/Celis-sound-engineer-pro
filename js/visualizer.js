@@ -267,23 +267,41 @@ function renderParticles(ctx) {
 }
 
 /**
- * Affiche un texte flottant dynamique et juteux (Critical click, Combo, Cash).
+ * Affiche un texte flottant dynamique, lisible et juteux (Clics, Achats, Déblocages, Alertes).
  */
-function spawnFloatingText(text, targetEl, isCrit = false) {
-    if (typeof document === 'undefined') return;
+function spawnFloatingText(text, targetEl, isCrit = false, customDurationMs = null) {
+    if (typeof document === 'undefined' || !text) return;
+
+    const strText = String(text);
+    const isWarning = strText.includes('⚠️') || strText.includes('❌');
+    const isSimpleClick = !isCrit && !isWarning && (/^[+-\s]*[\d.,\s]+[$⭐⚡📼]/.test(strText.trim()) || strText.startsWith('Combo'));
+
+    // Durée d'affichage : courte pour les micro-clics, confortable pour les messages lisibles
+    let duration = customDurationMs;
+    if (!duration) {
+        if (isSimpleClick) duration = 1400;
+        else if (isCrit || strText.includes('🏆') || strText.includes('🎉') || strText.includes('🎹') || strText.includes('👑')) duration = 3800;
+        else if (isWarning) duration = 3200;
+        else duration = 2800;
+    }
 
     const floatEl = document.createElement('div');
-    floatEl.className = 'floating-text' + (isCrit ? ' crit special' : '');
+    floatEl.className = 'floating-text' +
+        (isSimpleClick ? ' simple-click' : '') +
+        (isCrit ? ' crit special' : '') +
+        (isWarning ? ' warning' : '');
+    
     floatEl.textContent = text;
+    floatEl.style.animationDuration = `${(duration / 1000).toFixed(2)}s`;
 
     let posX = window.innerWidth / 2;
     let posY = window.innerHeight / 2;
 
     if (targetEl && typeof targetEl.getBoundingClientRect === 'function') {
         const rect = targetEl.getBoundingClientRect();
-        const offsetX = (Math.random() - 0.5) * 40;
-        posX = rect.left + rect.width / 2 + offsetX;
-        posY = rect.top + (rect.height ? rect.height / 2 : 0) - 10;
+        const offsetX = (Math.random() - 0.5) * 30;
+        posX = Math.max(120, Math.min(window.innerWidth - 120, rect.left + rect.width / 2 + offsetX));
+        posY = Math.max(80, rect.top + (rect.height ? rect.height / 2 : 0) - 15);
     }
 
     floatEl.style.left = `${posX}px`;
@@ -292,8 +310,10 @@ function spawnFloatingText(text, targetEl, isCrit = false) {
     document.body.appendChild(floatEl);
 
     setTimeout(() => {
-        floatEl.remove();
-    }, 1200);
+        if (floatEl.parentNode) floatEl.remove();
+    }, duration);
+
+    return floatEl;
 }
 
 /**

@@ -40,11 +40,11 @@ const QUEST_TEMPLATES = [
         reward: { moneyMult: 50, fame: 30, cassettes: 2 }
     },
     {
-        id: 'release_hit',
-        title: '💿 Producteur Prolifique',
-        description: 'Enregistrez et distribuez 1 nouveau projet musical.',
-        target: 1,
-        unit: 'projet',
+        id: 'upgrade_studio',
+        title: '🛠️ Expansion du Studio',
+        description: 'Achetez ou améliorez 5 équipements de studio.',
+        target: 5,
+        unit: 'équipements',
         reward: { moneyMult: 35, fame: 25, cassettes: 1 }
     }
 ];
@@ -137,12 +137,11 @@ const SECRET_CODES = {
     },
     'ANALOG': {
         name: 'Chaleur des Lampes Vintage',
-        description: 'Énergie restaurée à 100% + Boost Mastering x1.5 pendant 60s !',
+        description: 'Énergie restaurée à 100% + Boost de Production x1.5 pendant 60s !',
         action: () => {
             addEnergy(GameState.resources.maxEnergy || 100);
-            if (GameState.mastering) {
-                GameState.mastering.activeBonus = 1.5;
-                GameState.mastering.bonusTimeLeft = 60;
+            if (typeof applyTemporaryBooster === 'function') {
+                applyTemporaryBooster('analog_boost', 1.5, 60);
             }
         }
     },

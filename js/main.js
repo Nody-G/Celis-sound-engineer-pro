@@ -67,7 +67,6 @@ function initGame() {
     // Initialise les sous-systèmes
     if (typeof initSequencer === 'function') initSequencer();
     if (typeof initArtists === 'function') initArtists();
-    if (typeof initBillboard === 'function') initBillboard();
     if (typeof initQuests === 'function') initQuests();
 
     initUI();

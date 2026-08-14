@@ -76,23 +76,18 @@ function updateProduction(deltaTime) {
     const boosterMultiplier = getBoosterProductionMultiplier();
     const upgradeMultiplier = typeof getUpgradePassiveMultiplier === 'function' ? getUpgradePassiveMultiplier() : 1.0;
     const hypeMultiplier = (GameState.hype && GameState.hype.combo) ? GameState.hype.combo : 1.0;
-    const masteringBonus = (GameState.mastering && GameState.mastering.activeBonus) ? GameState.mastering.activeBonus : 1.0;
     const grooveBonus = typeof calculateGrooveBonus === 'function' ? calculateGrooveBonus() : 1.0;
     const artistBonus = typeof getArtistsPassiveBonus === 'function' ? getArtistsPassiveBonus() : 1.0;
     const tapePerkBonus = (GameState.quests && GameState.quests.perks && GameState.quests.perks.master_tape) ? 1.2 : 1.0;
 
     // Production totale des machines
-    const effectiveEquipmentProduction = equipmentBase * boosterMultiplier * upgradeMultiplier * hypeMultiplier * masteringBonus * grooveBonus * artistBonus * tapePerkBonus;
-
-    // 2. Royalties passives des albums
-    const albumRoyalties = typeof getTotalAlbumRoyalties === 'function' ? getTotalAlbumRoyalties() : 0;
-    const totalEffectiveProduction = effectiveEquipmentProduction + albumRoyalties;
+    const totalEffectiveProduction = equipmentBase * boosterMultiplier * upgradeMultiplier * hypeMultiplier * grooveBonus * artistBonus * tapePerkBonus;
 
     if (totalEffectiveProduction > 0) {
         addMoney(totalEffectiveProduction * deltaTime);
     }
 
-    // 3. Régénération d'énergie (Base + bonus R&D)
+    // 2. Régénération d'énergie (Base + bonus R&D)
     regenerateEnergy(deltaTime);
 
     // Auto-Mixer : Si l'énergie est pleine à 100% et que le perk est actif
@@ -104,11 +99,9 @@ function updateProduction(deltaTime) {
         }
     }
 
-    // 4. Sous-systèmes temps réel
+    // 3. Sous-systèmes temps réel
     if (typeof updateHype === 'function') updateHype(deltaTime);
-    if (typeof updateMasteringBonus === 'function') updateMasteringBonus(deltaTime);
     if (typeof updateArtists === 'function') updateArtists(deltaTime);
-    if (typeof updateBillboardSimulation === 'function') updateBillboardSimulation(deltaTime);
 }
 
 /**
@@ -119,14 +112,11 @@ function getPassiveProduction() {
     const boosterMultiplier = getBoosterProductionMultiplier();
     const upgradeMultiplier = typeof getUpgradePassiveMultiplier === 'function' ? getUpgradePassiveMultiplier() : 1.0;
     const hypeMultiplier = (GameState.hype && GameState.hype.combo) ? GameState.hype.combo : 1.0;
-    const masteringBonus = (GameState.mastering && GameState.mastering.activeBonus) ? GameState.mastering.activeBonus : 1.0;
     const grooveBonus = typeof calculateGrooveBonus === 'function' ? calculateGrooveBonus() : 1.0;
     const artistBonus = typeof getArtistsPassiveBonus === 'function' ? getArtistsPassiveBonus() : 1.0;
     const tapePerkBonus = (GameState.quests && GameState.quests.perks && GameState.quests.perks.master_tape) ? 1.2 : 1.0;
 
-    const albumRoyalties = typeof getTotalAlbumRoyalties === 'function' ? getTotalAlbumRoyalties() : 0;
-
-    return (equipmentBase * boosterMultiplier * upgradeMultiplier * hypeMultiplier * masteringBonus * grooveBonus * artistBonus * tapePerkBonus) + albumRoyalties;
+    return equipmentBase * boosterMultiplier * upgradeMultiplier * hypeMultiplier * grooveBonus * artistBonus * tapePerkBonus;
 }
 
 /**

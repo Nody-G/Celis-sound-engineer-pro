@@ -930,7 +930,7 @@ function updateEquipmentDisplay() {
         const canAfford = hasEnoughMoney(buyCalc.cost);
 
         const card = document.createElement('div');
-        card.className = `equipment-card ${canAfford ? 'affordable' : 'unaffordable'}`;
+        card.className = `equipment-card ${canAfford ? 'can-buy affordable' : 'unaffordable'}`;
         card.id = `equip-card-${def.id}`;
 
         let milestoneHtml = '';
@@ -959,9 +959,7 @@ function updateEquipmentDisplay() {
             `;
         }
 
-        const iconOrImg = def.image 
-            ? `<div class="equip-img-thumb-wrap"><img src="${def.image}" alt="${def.name}" class="equip-img-thumb" loading="lazy"></div>`
-            : `<span class="equip-icon">${def.icon}</span>`;
+        const iconOrImg = `<div class="equip-img-thumb-wrap"><img src="${def.image}" alt="${def.name}" class="equip-img-thumb" loading="lazy"></div>`;
 
         card.innerHTML = `
             <div class="equip-header">
@@ -991,13 +989,13 @@ function updateEquipmentDisplay() {
 
             ${milestoneHtml}
 
-            <button class="buy-button ${canAfford ? 'can-buy' : 'cannot-buy'}" data-id="${def.id}" ${canAfford ? '' : 'disabled'}>
+            <button class="buy-button buy-equip-btn ${canAfford ? 'can-buy' : 'cannot-buy disabled'}" data-id="${def.id}" ${canAfford ? '' : 'disabled'}>
                 <span class="buy-btn-label">Acheter (${buyCalc.quantity})</span>
                 <span class="buy-btn-cost">${formatNumber(buyCalc.cost)} $</span>
             </button>
         `;
 
-        const buyBtn = card.querySelector('.buy-button');
+        const buyBtn = card.querySelector('.buy-button, .buy-equip-btn');
         buyBtn.addEventListener('click', () => {
             initAudio();
             const res = buyEquipment(def.id, currentMultiplier);
@@ -1007,6 +1005,8 @@ function updateEquipmentDisplay() {
                     const rect = buyBtn.getBoundingClientRect();
                     spawnParticleBurst(rect.left + rect.width / 2, rect.top + rect.height / 2, 10);
                 }
+                const newCount = getEquipmentCount(def.id);
+                spawnFloatingText(`+${buyCalc.quantity} ${def.name} (Nv. ${newCount})`, buyBtn, false);
                 updateEquipmentDisplay();
                 updateResourceDisplay();
                 updateProductionDisplay();
@@ -1015,6 +1015,53 @@ function updateEquipmentDisplay() {
         });
 
         equipmentList.appendChild(card);
+    }
+}
+
+/**
+ * Met à jour dynamiquement et sans latence l'accessibilité financière des équipements.
+ */
+function updateEquipmentAffordability() {
+    const equipmentList = document.getElementById('equipment-list');
+    if (!equipmentList || equipmentList.children.length === 0) {
+        updateEquipmentDisplay();
+        return;
+    }
+
+    const currentMultiplier = GameState.buyMultiplier || 1;
+    const totalPassive = getTotalPassiveProduction();
+
+    for (const def of EQUIPMENT_DEFS) {
+        const card = document.getElementById(`equip-card-${def.id}`);
+        if (!card) continue;
+
+        const buyCalc = calculateEquipmentBuyCost(def.id, currentMultiplier);
+        const canAfford = hasEnoughMoney(buyCalc.cost);
+
+        const buyBtn = card.querySelector('.buy-button, .buy-equip-btn');
+        if (buyBtn) {
+            buyBtn.disabled = !canAfford;
+            buyBtn.classList.toggle('can-buy', canAfford);
+            buyBtn.classList.toggle('cannot-buy', !canAfford);
+            buyBtn.classList.toggle('disabled', !canAfford);
+
+            const labelEl = buyBtn.querySelector('.buy-btn-label');
+            const costEl = buyBtn.querySelector('.buy-btn-cost');
+            if (labelEl) labelEl.textContent = `Acheter (${buyCalc.quantity})`;
+            if (costEl) costEl.textContent = `${formatNumber(buyCalc.cost)} $`;
+        }
+
+        card.classList.toggle('can-buy', canAfford);
+        card.classList.toggle('affordable', canAfford);
+        card.classList.toggle('unaffordable', !canAfford);
+
+        // Actualisation du pourcentage de part du studio en temps réel
+        const shareEl = card.querySelector('.stat-v.gold');
+        if (shareEl) {
+            const currentItemTotalProd = getEquipmentItemTotalProduction(def.id);
+            const prodShare = totalPassive > 0 ? ((currentItemTotalProd / totalPassive) * 100).toFixed(1) : '0.0';
+            shareEl.textContent = `${prodShare}%`;
+        }
     }
 }
 
@@ -1143,12 +1190,21 @@ function updateArtistsDisplay() {
     }
 
     // 2. Artistes disponibles
+    const isFull = signed.length >= maxCapacity;
+
     availGrid.innerHTML = available.map(artist => {
         const realCost = applyPrestigeCost(artist.costMoney);
-        const canAfford = hasEnoughMoney(realCost) && GameState.resources.fame >= artist.reqFame;
+        const hasFame = GameState.resources.fame >= artist.reqFame;
+        const hasCash = hasEnoughMoney(realCost);
+        const canAfford = hasFame && hasCash && !isFull;
+
+        let btnLabel = '<span>Signer dans le Label</span>';
+        if (isFull) {
+            btnLabel = '<span>Écurie Pleine (Max)</span>';
+        }
 
         return `
-            <div class="artist-card available">
+            <div class="artist-card available ${canAfford ? 'affordable' : 'unaffordable'}" id="avail-artist-${artist.id}">
                 <div class="artist-card-header">
                     <span class="artist-avatar">${artist.avatar}</span>
                     <div class="artist-identity">
@@ -1165,7 +1221,7 @@ function updateArtistsDisplay() {
                 </div>
 
                 <button class="sign-artist-btn ${canAfford ? 'can-sign' : 'disabled'}" data-id="${artist.id}" ${canAfford ? '' : 'disabled'}>
-                    <span>Signer dans le Label</span>
+                    ${btnLabel}
                     <small>${formatNumber(realCost)} $ • ${artist.reqFame} ⭐</small>
                 </button>
             </div>
@@ -1182,6 +1238,7 @@ function updateArtistsDisplay() {
                     const rect = btn.getBoundingClientRect();
                     spawnParticleBurst(rect.left + rect.width / 2, rect.top + rect.height / 2, 20);
                 }
+                spawnFloatingText(`🎤 ${res.artist.name} a rejoint votre Label !`, btn, true);
             } else {
                 spawnFloatingText(`⚠️ ${res.reason}`, btn, false);
             }
@@ -1190,68 +1247,64 @@ function updateArtistsDisplay() {
 }
 
 /**
- * Met à jour le classement Billboard Top 50.
+ * Met à jour dynamiquement l'accessibilité des recrutements d'artistes et des missions.
  */
-function updateBillboardDisplay() {
-    const container = document.getElementById('billboard-chart-container');
-    const peakBadge = document.getElementById('peak-rank-badge');
-    if (!container) return;
+function updateArtistsAffordability() {
+    const availGrid = document.getElementById('available-artists-grid');
+    const rosterStatus = document.getElementById('artists-roster-status');
+    if (!availGrid) return;
 
-    if (!GameState.billboard) initBillboard();
+    const signed = (GameState.artists && GameState.artists.signed) ? GameState.artists.signed : [];
+    const available = (GameState.artists && GameState.artists.available) ? GameState.artists.available : [];
+    const maxCapacity = typeof getMaxSignedArtists === 'function' ? getMaxSignedArtists() : 4;
+    const isFull = signed.length >= maxCapacity;
 
-    if (peakBadge) {
-        peakBadge.textContent = `🏆 Meilleur Rang : #${GameState.billboard.myPeakRank || 50}`;
+    if (rosterStatus) {
+        rosterStatus.textContent = `${signed.length} / ${maxCapacity} Artistes Signés`;
     }
 
-    const chart = GameState.billboard.chart || [];
-    container.innerHTML = `
-        <div class="billboard-table-header">
-            <span class="col-rank">RANG</span>
-            <span class="col-title">TITRE DU MORCEAU</span>
-            <span class="col-artist">ARTISTE / LABEL</span>
-            <span class="col-streams">STREAMS MONDIAUX</span>
-        </div>
-        <div class="billboard-rows-list">
-            ${chart.map(item => `
-                <div class="billboard-row ${item.isPlayer ? 'player-hit' : ''}">
-                    <span class="col-rank rank-${item.rank}">
-                        ${item.rank === 1 ? '🥇 #1' : (item.rank <= 3 ? '🥈 #' + item.rank : '#' + item.rank)}
-                    </span>
-                    <span class="col-title"><strong>${item.title}</strong></span>
-                    <span class="col-artist">${item.artist}</span>
-                    <span class="col-streams">${formatNumber(item.streams)} 🎧</span>
-                </div>
-            `).join('')}
-        </div>
-    `;
+    available.forEach(artist => {
+        const card = document.getElementById(`avail-artist-${artist.id}`);
+        const btn = availGrid.querySelector(`.sign-artist-btn[data-id="${artist.id}"]`);
+        if (!btn) return;
+
+        const realCost = applyPrestigeCost(artist.costMoney);
+        const hasFame = GameState.resources.fame >= artist.reqFame;
+        const hasCash = hasEnoughMoney(realCost);
+        const canAfford = hasFame && hasCash && !isFull;
+
+        btn.disabled = !canAfford;
+        btn.classList.toggle('can-sign', canAfford);
+        btn.classList.toggle('disabled', !canAfford);
+
+        const labelSpan = btn.querySelector('span');
+        if (labelSpan) {
+            labelSpan.textContent = isFull ? 'Écurie Pleine (Max)' : 'Signer dans le Label';
+        }
+
+        if (card) {
+            card.classList.toggle('affordable', canAfford);
+            card.classList.toggle('unaffordable', !canAfford);
+        }
+    });
+
+    // Mise à jour de l'accessibilité en énergie pour les missions
+    const signedGrid = document.getElementById('signed-artists-grid');
+    if (signedGrid) {
+        signedGrid.querySelectorAll('.mission-action-btn').forEach(btn => {
+            const missionId = btn.dataset.mission;
+            const missionDef = typeof ARTIST_MISSIONS !== 'undefined' ? ARTIST_MISSIONS.find(m => m.id === missionId) : null;
+            if (missionDef) {
+                const hasEnergy = hasEnoughEnergy(missionDef.costEnergy);
+                const hasCassettes = missionId === 'world_tour' ? (GameState.resources.goldenCassettes || 0) >= 2 : true;
+                const canLaunch = hasEnergy && hasCassettes;
+                btn.classList.toggle('energy-low', !canLaunch);
+            }
+        });
+    }
 }
 
-/**
- * Met à jour la vitrine des Trophées et Certifications.
- */
-function updateTrophiesDisplay() {
-    const grid = document.getElementById('trophies-grid');
-    if (!grid) return;
 
-    const trophies = (GameState.billboard && GameState.billboard.trophies) ? GameState.billboard.trophies : {};
-
-    grid.innerHTML = TROPHIES_DEFS.map(t => {
-        const isUnlocked = !!trophies[t.id];
-        return `
-            <div class="trophy-card ${isUnlocked ? 'unlocked' : 'locked'}">
-                <div class="trophy-icon-wrap">${t.icon}</div>
-                <div class="trophy-details">
-                    <h4 class="trophy-title">${t.name}</h4>
-                    <p class="trophy-desc">${t.description}</p>
-                    <span class="trophy-bonus-tag">${t.bonusText}</span>
-                    <span class="trophy-status-tag ${isUnlocked ? 'acquired' : 'locked-tag'}">
-                        ${isUnlocked ? '✅ DÉBLOQUÉ ET ACTIF' : '🔒 NON OBTENU'}
-                    </span>
-                </div>
-            </div>
-        `;
-    }).join('');
-}
 
 /**
  * Met à jour l'onglet Quêtes Quotidiennes & Boutique de Cassettes.
@@ -1290,12 +1343,13 @@ function updateQuestsDisplay() {
     }).join('');
 
     // 2. Avantages Boutique Cassettes
+    const currentCassettes = GameState.resources.goldenCassettes || 0;
     perksGrid.innerHTML = CASSETTE_PERKS.map(p => {
         const isOwned = !!(GameState.quests.perks && GameState.quests.perks[p.id]);
-        const canAfford = (GameState.resources.goldenCassettes || 0) >= p.cost && !isOwned;
+        const canAfford = currentCassettes >= p.cost && !isOwned;
 
         return `
-            <div class="perk-card ${isOwned ? 'owned' : ''}">
+            <div class="perk-card ${isOwned ? 'owned' : (canAfford ? 'can-buy' : '')}" id="perk-card-${p.id}">
                 <div class="perk-header">
                     <span class="perk-icon">${p.icon}</span>
                     <h4 class="perk-name">${p.name}</h4>
@@ -1313,11 +1367,52 @@ function updateQuestsDisplay() {
             initAudio();
             const perkId = btn.dataset.id;
             const res = buyCassettePerk(perkId);
-            if (!res.success) {
-                alert(`⚠️ ${res.reason}`);
+            if (res.success) {
+                const perk = CASSETTE_PERKS.find(p => p.id === perkId);
+                spawnFloatingText(`📼 Atout Débloqué : ${perk ? perk.name : perkId} !`, btn, true);
+            } else {
+                spawnFloatingText(`⚠️ ${res.reason}`, btn, false);
             }
         });
     });
+}
+
+/**
+ * Met à jour dynamiquement la progression des quêtes et l'accessibilité des atouts cassettes.
+ */
+function updateQuestsAffordability() {
+    const perksGrid = document.getElementById('cassette-perks-grid');
+    if (perksGrid && typeof CASSETTE_PERKS !== 'undefined') {
+        const currentCassettes = GameState.resources.goldenCassettes || 0;
+        for (const p of CASSETTE_PERKS) {
+            const card = document.getElementById(`perk-card-${p.id}`);
+            if (!card) continue;
+
+            const isOwned = !!(GameState.quests && GameState.quests.perks && GameState.quests.perks[p.id]);
+            if (isOwned) continue;
+
+            const canAfford = currentCassettes >= p.cost;
+            const btn = card.querySelector('.buy-perk-btn');
+            if (btn) {
+                btn.disabled = !canAfford;
+                btn.className = `buy-perk-btn ${canAfford ? 'can-buy' : 'disabled'}`;
+            }
+            card.classList.toggle('can-buy', canAfford);
+        }
+    }
+
+    const questsList = document.getElementById('daily-quests-list');
+    if (questsList && GameState.quests && GameState.quests.daily) {
+        GameState.quests.daily.forEach((q, idx) => {
+            const card = questsList.children[idx];
+            if (!card) return;
+            const progPct = Math.min(100, Math.round((q.current / q.target) * 100));
+            const fill = card.querySelector('.quest-bar-fill');
+            const num = card.querySelector('.quest-numeric');
+            if (fill) fill.style.width = `${progPct}%`;
+            if (num) num.textContent = `${q.current} / ${q.target} ${q.unit}`;
+        });
+    }
 }
 
 /**
@@ -1338,7 +1433,8 @@ function updateUpgradesDisplay() {
         const canAfford = hasEnoughMoney(realCost);
 
         const card = document.createElement('div');
-        card.className = `upgrade-card ${isBought ? 'bought' : (canAfford ? 'affordable' : 'unaffordable')}`;
+        card.className = `upgrade-card ${isBought ? 'bought' : (canAfford ? 'affordable can-buy' : 'unaffordable')}`;
+        card.id = `upgrade-card-${def.id}`;
 
         card.innerHTML = `
             <div class="upgrade-header">
@@ -1352,7 +1448,7 @@ function updateUpgradesDisplay() {
             <div class="upgrade-footer">
                 ${isBought ?
                     '<span class="bought-tag">✅ Technologie Brevetée</span>' :
-                    `<button class="upgrade-buy-btn ${canAfford ? 'can-buy' : 'disabled'}" data-id="${def.id}" ${canAfford ? '' : 'disabled'}>
+                    `<button class="upgrade-buy-btn buy-upgrade-btn ${canAfford ? 'can-buy' : 'disabled'}" data-id="${def.id}" ${canAfford ? '' : 'disabled'}>
                         <span>Débloquer</span>
                         <small>${formatNumber(realCost)} $</small>
                     </button>`
@@ -1361,16 +1457,19 @@ function updateUpgradesDisplay() {
         `;
 
         if (!isBought) {
-            const btn = card.querySelector('.upgrade-buy-btn');
+            const btn = card.querySelector('.upgrade-buy-btn, .buy-upgrade-btn');
             btn.addEventListener('click', () => {
                 initAudio();
                 const success = buyUpgrade(def.id);
                 if (success) {
                     playUpgradeSound();
+                    spawnFloatingText(`🔬 Amélioration R&D brevetée : ${def.name} !`, btn, true);
                     updateUpgradesDisplay();
                     updateResourceDisplay();
                     updateProductionDisplay();
                     checkAndNotifyAchievements();
+                } else {
+                    spawnFloatingText(`⚠️ Fonds insuffisants (${formatNumber(realCost)} $)`, btn, false);
                 }
             });
         }
@@ -1380,61 +1479,52 @@ function updateUpgradesDisplay() {
 }
 
 /**
- * Met à jour l'affichage de l'historique de la discographie.
+ * Met à jour dynamiquement l'accessibilité des améliorations R&D en direct.
  */
-function updateDiscographyDisplay() {
-    const historyList = document.getElementById('albums-history-list');
-    const royaltiesDisplay = document.getElementById('total-royalties-display');
+function updateUpgradesAffordability() {
+    const list = document.getElementById('upgrades-list');
+    if (!list || typeof UPGRADE_DEFS === 'undefined') return;
 
-    if (royaltiesDisplay) {
-        royaltiesDisplay.textContent = `+${formatNumber(getTotalAlbumRoyalties())} $/s`;
+    // Vérifie si une nouvelle amélioration s'est débloquée
+    for (const def of UPGRADE_DEFS) {
+        const isBought = isUpgradeBought(def.id);
+        const isUnlocked = isUpgradeUnlocked(def.id);
+        const card = document.getElementById(`upgrade-card-${def.id}`);
+        if (isUnlocked && !card) {
+            updateUpgradesDisplay();
+            return;
+        }
     }
 
-    if (!historyList) return;
-
-    if (!GameState.discography || !GameState.discography.albums || GameState.discography.albums.length === 0) {
-        historyList.innerHTML = '<p class="empty-history-text">Aucun titre sorti pour le moment. Enregistrez votre premier hit ci-dessus !</p>';
+    if (list.children.length === 0) {
+        updateUpgradesDisplay();
         return;
     }
 
-    historyList.innerHTML = GameState.discography.albums.map(alb => `
-        <div class="album-history-card">
-            <div class="album-badge-and-title">
-                <span class="album-plaque-tag">${alb.plaque}</span>
-                <h4 class="album-name">"${alb.title}"</h4>
-            </div>
-            <div class="album-metadata">
-                <span>${alb.formatName}</span>
-                <span>${alb.genreName}</span>
-                <span class="score-pill">⭐ Note : ${alb.reviewScore}/10</span>
-                <span class="royalties-tag green">+${formatNumber(alb.royaltiesPerSec)} $/s</span>
-            </div>
-        </div>
-    `).join('');
-}
+    for (const def of UPGRADE_DEFS) {
+        const isBought = isUpgradeBought(def.id);
+        if (isBought) continue;
 
-/**
- * Met à jour l'affichage du Mastering Lab.
- */
-function updateMasteringDisplay() {
-    const statusBar = document.getElementById('mastering-bonus-status');
-    if (!statusBar || !GameState.mastering) return;
+        const card = document.getElementById(`upgrade-card-${def.id}`);
+        if (!card) continue;
 
-    const m = GameState.mastering;
-    if (m.bonusTimeLeft > 0) {
-        statusBar.innerHTML = `
-            <span class="mastering-active-badge">
-                🔥 MASTERING ANALOGIQUE ACTIF : Multiplicateur <strong>x${m.activeBonus}</strong> (${Math.ceil(m.bonusTimeLeft)}s restantes) !
-            </span>
-        `;
-    } else {
-        statusBar.innerHTML = `
-            <span class="mastering-idle-badge">
-                Calibrez les curseurs Basses/Médiums/Aigus et lancez le test pour booster le studio.
-            </span>
-        `;
+        const realCost = applyPrestigeCost(def.cost);
+        const canAfford = hasEnoughMoney(realCost);
+
+        const btn = card.querySelector('.upgrade-buy-btn, .buy-upgrade-btn');
+        if (btn) {
+            btn.disabled = !canAfford;
+            btn.classList.toggle('can-buy', canAfford);
+            btn.classList.toggle('disabled', !canAfford);
+        }
+
+        card.classList.toggle('affordable', canAfford);
+        card.classList.toggle('can-buy', canAfford);
+        card.classList.toggle('unaffordable', !canAfford);
     }
 }
+
+
 
 /**
  * Met à jour l'affichage des boosters.
@@ -1451,7 +1541,8 @@ function updateBoostersDisplay() {
         const canAfford = hasEnoughMoney(realCost);
 
         const card = document.createElement('div');
-        card.className = `booster-card ${active ? 'active' : ''} ${canAfford ? 'affordable' : 'unaffordable'}`;
+        card.className = `booster-card ${active ? 'active' : ''} ${canAfford ? 'affordable can-buy' : 'unaffordable'}`;
+        card.id = `booster-card-${def.id}`;
 
         card.innerHTML = `
             <div class="booster-header">
@@ -1465,7 +1556,7 @@ function updateBoostersDisplay() {
             <div class="booster-footer">
                 ${active ?
                     `<span class="booster-active-tag">⚡ Actif (${Math.ceil(timeLeft)}s)</span>` :
-                    `<button class="booster-buy-btn ${canAfford ? 'can-buy' : 'disabled'}" data-id="${def.id}" ${canAfford ? '' : 'disabled'}>
+                    `<button class="booster-buy-btn buy-booster-btn ${canAfford ? 'can-buy' : 'disabled'}" data-id="${def.id}" ${canAfford ? '' : 'disabled'}>
                         Activer pour ${formatNumber(realCost)} $
                     </button>`
                 }
@@ -1473,15 +1564,18 @@ function updateBoostersDisplay() {
         `;
 
         if (!active) {
-            const btn = card.querySelector('.booster-buy-btn');
+            const btn = card.querySelector('.booster-buy-btn, .buy-booster-btn');
             btn.addEventListener('click', () => {
                 initAudio();
                 const res = buyBooster(def.id);
                 if (res.success) {
                     playBoosterSound();
+                    spawnFloatingText(`⚡ Booster activé : ${def.name} !`, btn, true);
                     updateBoostersDisplay();
                     updateResourceDisplay();
                     updateProductionDisplay();
+                } else {
+                    spawnFloatingText(`⚠️ ${res.reason}`, btn, false);
                 }
             });
         }
@@ -1491,66 +1585,53 @@ function updateBoostersDisplay() {
 }
 
 /**
- * Met à jour l'affichage des contrats.
+ * Met à jour dynamiquement les boosters sans détruire le DOM à 60 FPS.
  */
-/**
- * Met à jour l'affichage des contrats.
- */
-function updateContractsDisplay() {
-    const list = document.getElementById('contracts-list');
-    if (!list) return;
+function updateBoostersAffordability() {
+    const list = document.getElementById('boosters-list');
+    if (!list || typeof BOOSTER_DEFS === 'undefined') return;
 
-    list.innerHTML = '';
-    for (const def of CONTRACT_DEFS) {
-        const isDone = isContractCompleted(def.id);
-        const canAccept = canAcceptContract(def.id);
-        const reqFame = def.fameRequirement || def.requiredFame || 0;
-        const moneyRew = def.moneyReward || def.rewardMoney || 0;
-        const fameRew = def.fameReward || def.rewardFame || 0;
+    if (list.children.length === 0) {
+        updateBoostersDisplay();
+        return;
+    }
 
-        const card = document.createElement('div');
-        card.className = `contract-card ${isDone ? 'completed' : (canAccept ? 'available' : 'locked')}`;
+    for (const def of BOOSTER_DEFS) {
+        const card = document.getElementById(`booster-card-${def.id}`);
+        if (!card) continue;
 
-        card.innerHTML = `
-            <div class="contract-header">
-                <span class="contract-icon">${def.icon || '📋'}</span>
-                <div>
-                    <h3 class="contract-name">${def.name}</h3>
-                    <span class="contract-req">Requis: ${formatNumber(reqFame)} ⭐</span>
-                </div>
-            </div>
-            <p class="contract-desc">${def.description}</p>
-            <div class="contract-rewards-row">
-                <span class="reward-pill green">+${formatNumber(moneyRew)} $</span>
-                <span class="reward-pill fame">+${formatNumber(fameRew)} ⭐</span>
-            </div>
-            <button class="contract-action-btn ${isDone ? 'done' : (canAccept ? 'can-sign' : 'disabled')}" data-id="${def.id}" ${canAccept ? '' : 'disabled'}>
-                ${isDone ? '✅ Complété' : (canAccept ? 'Signer le Contrat' : `Verrouillé (${formatNumber(reqFame)} ⭐)`)}
-            </button>
-        `;
+        const active = isBoosterActive(def.id);
 
-        if (canAccept && !isDone) {
-            const btn = card.querySelector('.contract-action-btn');
-            btn.addEventListener('click', () => {
-                initAudio();
-                const res = completeContract(def.id);
-                if (res && res.success) {
-                    playContractSound();
-                    if (typeof spawnParticleBurst === 'function') {
-                        const rect = btn.getBoundingClientRect();
-                        spawnParticleBurst(rect.left + rect.width / 2, rect.top + rect.height / 2, 20);
-                    }
-                    updateContractsDisplay();
-                    updateResourceDisplay();
-                    updateProductionDisplay();
-                    checkAndNotifyAchievements();
-                }
-            });
+        if (active) {
+            const timeLeft = getBoosterTimeLeft(def.id);
+            const activeTag = card.querySelector('.booster-active-tag');
+            if (activeTag) {
+                activeTag.textContent = `⚡ Actif (${Math.ceil(timeLeft)}s)`;
+            } else {
+                updateBoostersDisplay();
+                return;
+            }
+        } else {
+            const btn = card.querySelector('.booster-buy-btn, .buy-booster-btn');
+            if (!btn) {
+                updateBoostersDisplay();
+                return;
+            }
+            const realCost = applyPrestigeCost(def.cost);
+            const canAfford = hasEnoughMoney(realCost);
+
+            btn.disabled = !canAfford;
+            btn.classList.toggle('can-buy', canAfford);
+            btn.classList.toggle('disabled', !canAfford);
+
+            card.classList.toggle('affordable', canAfford);
+            card.classList.toggle('can-buy', canAfford);
+            card.classList.toggle('unaffordable', !canAfford);
         }
-
-        list.appendChild(card);
     }
 }
+
+
 
 /**
  * Met à jour l'affichage des succès.
@@ -1597,14 +1678,18 @@ function updateAchievementsDisplay() {
 }
 
 /**
- * Met à jour dynamiquement les éléments en temps réel de l'onglet actif (timers, jauges).
+ * Met à jour dynamiquement les éléments en temps réel de l'onglet actif (timers, jauges, accessibilité).
  */
 function updateActiveTabDisplay() {
     const activeTab = document.querySelector('.tab-button.active');
     if (!activeTab) return;
     const tabId = activeTab.dataset.tab;
 
-    if (tabId === 'artists') {
+    if (tabId === 'equipment') {
+        updateEquipmentAffordability();
+    } else if (tabId === 'upgrades') {
+        updateUpgradesAffordability();
+    } else if (tabId === 'artists') {
         if (GameState.artists && GameState.artists.signed) {
             for (const artist of GameState.artists.signed) {
                 if (artist.isBusy && artist.currentMission) {
@@ -1620,22 +1705,24 @@ function updateActiveTabDisplay() {
                 }
             }
         }
-    } else if (tabId === 'mastering') {
-        updateMasteringDisplay();
+        updateArtistsAffordability();
     } else if (tabId === 'boosters') {
-        updateBoostersDisplay();
+        updateBoostersAffordability();
+    } else if (tabId === 'quests') {
+        updateQuestsAffordability();
+    } else if (tabId === 'prestige') {
+        updatePrestigeAffordability();
     }
 }
 
 /**
- * Met à jour l'onglet Statistiques avec les 14 métriques complètes du studio.
+ * Met à jour l'onglet Statistiques avec les métriques essentielles du studio.
  */
 function updateStatsDisplay() {
     const content = document.getElementById('stats-content');
     if (!content) return;
 
     const stats = GameState.stats || {};
-    const totalStreams = (GameState.discography && GameState.discography.totalStreams) ? GameState.discography.totalStreams : 0;
     const totalPrestiges = (GameState.prestige && GameState.prestige.totalPrestiges) ? GameState.prestige.totalPrestiges : 0;
 
     content.innerHTML = `
@@ -1659,21 +1746,6 @@ function updateStatsDisplay() {
                 <span class="stat-card-icon">🎛️</span>
                 <span class="stat-card-label">Morceaux mixés manuellement</span>
                 <strong class="stat-card-val cyan">${formatNumber(stats.tracksMixed)}</strong>
-            </div>
-            <div class="stat-dashboard-card">
-                <span class="stat-card-icon">💿</span>
-                <span class="stat-card-label">Albums & Hits distribués</span>
-                <strong class="stat-card-val gold">${formatNumber(stats.albumsReleased)}</strong>
-            </div>
-            <div class="stat-dashboard-card">
-                <span class="stat-card-icon">🎧</span>
-                <span class="stat-card-label">Streams mondiaux cumulés</span>
-                <strong class="stat-card-val magenta">${formatNumber(totalStreams)} streams</strong>
-            </div>
-            <div class="stat-dashboard-card">
-                <span class="stat-card-icon">📜</span>
-                <span class="stat-card-label">Contrats commerciaux réussis</span>
-                <strong class="stat-card-val cyan">${stats.contractsCompleted || 0} / ${typeof CONTRACT_DEFS !== 'undefined' ? CONTRACT_DEFS.length : 10}</strong>
             </div>
             <div class="stat-dashboard-card">
                 <span class="stat-card-icon">🔬</span>
@@ -1727,7 +1799,7 @@ function updatePrestigeDisplay() {
 
     const pending = getPendingPrestigePoints();
     const canPrestige = canPerformPrestige();
-    const p = GameState.prestige;
+    const p = GameState.prestige || { points: 0, lifetimeFame: 0 };
     const tree = p.tree || { soundMastery: 0, businessEmpire: 0, hypeOverdrive: 0 };
 
     content.innerHTML = `
@@ -1786,11 +1858,19 @@ function updatePrestigeDisplay() {
     `;
 
     const prestigeBtn = document.getElementById('do-prestige-btn');
-    if (prestigeBtn && canPrestige) {
+    if (prestigeBtn) {
         prestigeBtn.addEventListener('click', () => {
-            if (confirm(`🏆 Confirmer la refonte de studio ?\n\nVous gagnerez +${pending} Points de Maîtrise permanents.`)) {
+            if (!canPerformPrestige()) {
+                spawnFloatingText('⚠️ Renommée insuffisante pour débloquer de nouveaux points', prestigeBtn, false);
+                return;
+            }
+            const currentPending = getPendingPrestigePoints();
+            if (confirm(`🏆 Confirmer la refonte de studio ?\n\nVous gagnerez +${currentPending} Points de Maîtrise permanents.`)) {
                 initAudio();
-                performPrestige();
+                const res = performPrestige();
+                if (res) {
+                    spawnFloatingText(`👑 Refonte accomplie : +${res.pointsEarned} Points de Maîtrise !`, document.getElementById('header'), true);
+                }
                 updateAllDisplay();
             }
         });
@@ -1800,16 +1880,53 @@ function updatePrestigeDisplay() {
         btn.addEventListener('click', () => {
             initAudio();
             const node = btn.dataset.node;
-            if (GameState.prestige.points > 0) {
+            if (GameState.prestige && GameState.prestige.points > 0) {
                 GameState.prestige.points--;
                 GameState.prestige.spentPoints = (GameState.prestige.spentPoints || 0) + 1;
+                if (!GameState.prestige.tree) GameState.prestige.tree = {};
                 GameState.prestige.tree[node] = (GameState.prestige.tree[node] || 0) + 1;
                 playUpgradeSound();
+                spawnFloatingText(`👑 Compétence améliorée (+1) !`, btn, true);
                 updatePrestigeDisplay();
                 updateProductionDisplay();
                 saveGame();
+            } else {
+                spawnFloatingText(`⚠️ Aucun Point de Maîtrise disponible`, btn, false);
             }
         });
+    });
+}
+
+/**
+ * Met à jour dynamiquement l'accessibilité du prestige et de l'arbre de maîtrise.
+ */
+function updatePrestigeAffordability() {
+    const content = document.getElementById('prestige-content');
+    if (!content) return;
+
+    const pending = getPendingPrestigePoints();
+    const canPrestige = canPerformPrestige();
+    const p = GameState.prestige || { points: 0, lifetimeFame: 0 };
+
+    const doPrestigeBtn = document.getElementById('do-prestige-btn');
+    if (doPrestigeBtn) {
+        doPrestigeBtn.disabled = !canPrestige;
+        doPrestigeBtn.className = `do-prestige-btn ${canPrestige ? 'ready' : 'disabled'}`;
+        doPrestigeBtn.textContent = `🏆 EXÉCUTER LA REFONTE DU STUDIO (+${pending} Points)`;
+    }
+
+    const pendingStat = content.querySelector('.p-stat strong.cyan');
+    if (pendingStat) pendingStat.textContent = `+${pending} 👑`;
+
+    const fameStat = content.querySelector('.p-stat strong.fame');
+    if (fameStat) fameStat.textContent = `${formatNumber(p.lifetimeFame)} ⭐`;
+
+    const pointsStat = content.querySelector('.p-stat strong.gold');
+    if (pointsStat) pointsStat.textContent = `${p.points} 👑`;
+
+    content.querySelectorAll('.upgrade-tree-btn').forEach(btn => {
+        btn.disabled = p.points <= 0;
+        btn.className = `upgrade-tree-btn ${p.points > 0 ? 'active' : 'disabled'}`;
     });
 }
 
@@ -1821,14 +1938,9 @@ function updateAllDisplay() {
     updateProductionDisplay();
     updateEquipmentDisplay();
     updateUpgradesDisplay();
-    updateDiscographyDisplay();
     updateArtistsDisplay();
-    updateBillboardDisplay();
-    updateTrophiesDisplay();
     updateQuestsDisplay();
-    updateMasteringDisplay();
     updateBoostersDisplay();
-    updateContractsDisplay();
     updateAchievementsDisplay();
     updateStatsDisplay();
     updatePrestigeDisplay();
@@ -1935,92 +2047,6 @@ function initUI() {
         });
     });
 
-    // Sortie d'album / single dans l'onglet Discographie
-    const releaseBtn = document.getElementById('release-album-btn');
-    const customTitleInput = document.getElementById('custom-album-title-input');
-    const randomTitleBtn = document.getElementById('random-album-title-btn');
-    const genreSelect = document.getElementById('album-genre-select');
-
-    if (randomTitleBtn && genreSelect && customTitleInput) {
-        randomTitleBtn.addEventListener('click', () => {
-            initAudio();
-            customTitleInput.value = generateRandomAlbumTitle(genreSelect.value);
-            if (typeof spawnParticleBurst === 'function') {
-                const rect = randomTitleBtn.getBoundingClientRect();
-                spawnParticleBurst(rect.left + rect.width / 2, rect.top + rect.height / 2, 6);
-            }
-        });
-    }
-
-    if (releaseBtn) {
-        releaseBtn.addEventListener('click', () => {
-            initAudio();
-            const formatSelect = document.getElementById('album-format-select');
-            if (!formatSelect || !genreSelect) return;
-
-            const customTitle = customTitleInput ? customTitleInput.value : '';
-            const res = releaseRecord(formatSelect.value, genreSelect.value, customTitle);
-            if (res.success) {
-                playContractSound();
-                if (typeof spawnParticleBurst === 'function') {
-                    const rect = releaseBtn.getBoundingClientRect();
-                    spawnParticleBurst(rect.left + rect.width / 2, rect.top + rect.height / 2, 25);
-                }
-                if (customTitleInput) customTitleInput.value = '';
-                
-                spawnFloatingText(`🎉 Sortie Réussie : "${res.album.title}" (+${formatNumber(res.album.royaltiesPerSec)} $/s)`, releaseBtn, true);
-                
-                updateDiscographyDisplay();
-                updateBillboardDisplay();
-                updateResourceDisplay();
-                updateProductionDisplay();
-                checkAndNotifyAchievements();
-            } else {
-                spawnFloatingText(`⚠️ ${res.reason}`, releaseBtn, false);
-            }
-        });
-    }
-
-    // Mini-Jeu Mastering EQ
-    const testEqBtn = document.getElementById('test-eq-btn');
-    if (testEqBtn) {
-        testEqBtn.addEventListener('click', () => {
-            initAudio();
-            const low = parseInt(document.getElementById('eq-slider-low').value, 10) || 50;
-            const mid = parseInt(document.getElementById('eq-slider-mid').value, 10) || 50;
-            const high = parseInt(document.getElementById('eq-slider-high').value, 10) || 50;
-
-            if (GameState.mastering) {
-                GameState.mastering.currentLow = low;
-                GameState.mastering.currentMid = mid;
-                GameState.mastering.currentHigh = high;
-            }
-
-            const res = testMasteringEQ();
-            if (res && res.success) {
-                spawnFloatingText(`🎛️ Mastering Validé (${res.accuracy}%) : Boost x${res.multiplier} !`, testEqBtn, true);
-                updateMasteringDisplay();
-                updateResourceDisplay();
-                updateProductionDisplay();
-            } else if (res && res.reason) {
-                spawnFloatingText(`⚠️ ${res.reason}`, testEqBtn, false);
-            }
-        });
-    }
-
-    ['low', 'mid', 'high'].forEach(type => {
-        const slider = document.getElementById(`eq-slider-${type}`);
-        const label = document.getElementById(`eq-val-${type}`);
-        if (slider && label) {
-            slider.addEventListener('input', () => {
-                label.textContent = slider.value;
-                if (GameState.mastering) {
-                    GameState.mastering[`current${type.charAt(0).toUpperCase() + type.slice(1)}`] = parseInt(slider.value, 10);
-                }
-            });
-        }
-    });
-
     // Navigation par Onglets
     const tabButtons = document.querySelectorAll('.tab-button');
     tabButtons.forEach(button => {
@@ -2037,14 +2063,9 @@ function initUI() {
 
             if (tabId === 'equipment') updateEquipmentDisplay();
             if (tabId === 'upgrades') updateUpgradesDisplay();
-            if (tabId === 'discography') updateDiscographyDisplay();
             if (tabId === 'artists') updateArtistsDisplay();
-            if (tabId === 'billboard') updateBillboardDisplay();
-            if (tabId === 'trophies') updateTrophiesDisplay();
             if (tabId === 'quests') updateQuestsDisplay();
-            if (tabId === 'mastering') updateMasteringDisplay();
             if (tabId === 'boosters') updateBoostersDisplay();
-            if (tabId === 'contracts') updateContractsDisplay();
             if (tabId === 'achievements') updateAchievementsDisplay();
             if (tabId === 'stats') updateStatsDisplay();
             if (tabId === 'prestige') updatePrestigeDisplay();

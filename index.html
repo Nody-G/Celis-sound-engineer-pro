@@ -246,14 +246,9 @@
             <nav id="tabs">
                 <button class="tab-button active" data-tab="equipment">🎚️ Équipement</button>
                 <button class="tab-button" data-tab="upgrades">🔬 R&D Studio</button>
-                <button class="tab-button" data-tab="discography">💿 Discographie</button>
                 <button class="tab-button highlight" data-tab="artists">🎤 Label & Artistes</button>
-                <button class="tab-button highlight" data-tab="billboard">📈 Billboard Top 50</button>
-                <button class="tab-button gold" data-tab="trophies">🏆 Trophées & Plaquettes</button>
                 <button class="tab-button" data-tab="quests">🎯 Quêtes & Boutique 📼</button>
-                <button class="tab-button" data-tab="mastering">🎛️ Mastering Lab</button>
                 <button class="tab-button" data-tab="boosters">⚡ Boosters</button>
-                <button class="tab-button" data-tab="contracts">📋 Contrats</button>
                 <button class="tab-button" data-tab="achievements">🏅 Succès</button>
                 <button class="tab-button" data-tab="stats">📊 Statistiques</button>
                 <button class="tab-button prestige" data-tab="prestige">👑 Prestige</button>
@@ -288,61 +283,6 @@
                 <div id="upgrades-list" class="upgrades-grid"></div>
             </section>
 
-            <!-- Onglet Discographie & Albums -->
-            <section id="discography-tab" class="tab-content">
-                <h2>💿 Discographie & Sorties d'Albums</h2>
-                <p class="tab-subtitle">Enregistrez des hits, lancez-les dans les charts mondiaux et percevez des royalties de streaming !</p>
-
-                <!-- Formulaire de sortie -->
-                <div class="album-creator-card">
-                    <div class="creator-header">
-                        <h3>🎙️ Nouveau Projet Musical</h3>
-                        <div class="total-royalties-pill">
-                            Total Royalties Actives : <strong id="total-royalties-display">+0 $/s</strong>
-                        </div>
-                    </div>
-
-                    <div class="creator-form-grid">
-                        <div class="form-group album-title-group">
-                            <label for="custom-album-title-input">Titre du morceau / album :</label>
-                            <div class="album-title-input-wrap">
-                                <input type="text" id="custom-album-title-input" class="studio-input" placeholder="Titre personnalisé ou généré..." maxlength="45">
-                                <button id="random-album-title-btn" class="random-dice-btn" type="button" title="Générer un titre stylé selon le genre">🎲</button>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="album-format-select">Format de sortie :</label>
-                            <select id="album-format-select" class="studio-select">
-                                <option value="single">🎵 Single Hit (1 Titre) - 500 $ • 30 ⚡</option>
-                                <option value="ep">💿 EP Studio (4 Titres) - 10 000 $ • 60 ⚡</option>
-                                <option value="album">🎼 Album Complet (12 Titres) - 250 000 $ • 90 ⚡</option>
-                                <option value="world_tour_record">👑 Album Live Tournée - 10M $ • 100 ⚡</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="album-genre-select">Genre musical :</label>
-                            <select id="album-genre-select" class="studio-select">
-                                <option value="synthwave">🌆 Synthwave 80s (Bonus Royalties x1.2)</option>
-                                <option value="french_house">🥖 French Touch (Bonus Royalties x1.35)</option>
-                                <option value="lofi">☕ Lo-Fi Hip-Hop (Bonus Royalties x1.0)</option>
-                                <option value="trap">🔥 Trap / Hip-Hop (Bonus Royalties x1.4)</option>
-                                <option value="cyberpunk">🤖 Cyberpunk Techno (Bonus Royalties x1.5)</option>
-                                <option value="future_bass">🌌 Future Bass EDM (Bonus Royalties x1.6)</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <button id="release-album-btn" class="release-btn">
-                        🚀 ENREGISTRER & DISTRIBUER SUR LES PLATEFORMES
-                    </button>
-                </div>
-
-                <h3 class="section-title">🏆 Vos Sorties Récentes & Plaquettes</h3>
-                <div id="albums-history-list" class="albums-history-list"></div>
-            </section>
-
             <!-- Onglet Label & Artistes -->
             <section id="artists-tab" class="tab-content">
                 <div class="section-hero-illustration">
@@ -363,28 +303,6 @@
                 <div id="available-artists-grid" class="artists-grid"></div>
             </section>
 
-            <!-- Onglet Billboard Top 50 -->
-            <section id="billboard-tab" class="tab-content">
-                <div class="tab-header-flex">
-                    <div>
-                        <h2>📈 Hit-Parade Mondial du Billboard Top 20</h2>
-                        <p class="tab-subtitle">Vos singles rivalisent avec les plus grands hits de la planète. Grimpez jusqu'à la 1ère place !</p>
-                    </div>
-                    <div class="peak-rank-badge" id="peak-rank-badge">🏆 Meilleur Rang : #50</div>
-                </div>
-                <div id="billboard-chart-container" class="billboard-chart-container"></div>
-            </section>
-
-            <!-- Onglet Trophées & Disques d'Or -->
-            <section id="trophies-tab" class="tab-content">
-                <div class="section-hero-illustration">
-                    <img src="assets/trophies/trophies_banner.svg" alt="Trophées & Disques d'Or Banner" class="tab-hero-banner-img">
-                </div>
-                <h2>🏆 Vitrine des Trophées & Disques de Certification</h2>
-                <p class="tab-subtitle">Les récompenses majeures de votre carrière confèrent des multiplicateurs permanents à votre studio.</p>
-                <div id="trophies-grid" class="trophies-grid"></div>
-            </section>
-
             <!-- Onglet Quêtes & Boutique de Cassettes -->
             <section id="quests-tab" class="tab-content">
                 <div class="quests-hero-banner">
@@ -402,57 +320,11 @@
                 <div id="cassette-perks-grid" class="cassette-perks-grid"></div>
             </section>
 
-            <!-- Onglet Mastering Lab (Mini-Jeu) -->
-            <section id="mastering-tab" class="tab-content">
-                <div class="section-hero-illustration">
-                    <img src="assets/mastering_banner.svg" alt="Mastering Lab Banner" class="tab-hero-banner-img">
-                </div>
-                <h2>🎛️ Mastering Lab & Calibrage Fréquentiel</h2>
-                <p class="tab-subtitle">Ajustez les curseurs d'égalisation analogique pour trouver le sweet spot et décrocher jusqu'à <strong>x2.5 de Production</strong> !</p>
-
-                <div class="mastering-console-card">
-                    <div id="mastering-bonus-status" class="mastering-status-bar">
-                        <span class="mastering-idle-badge">Réglez l'égaliseur et lancez le test pour calibrer le studio.</span>
-                    </div>
-
-                    <div class="eq-sliders-container">
-                        <div class="eq-channel">
-                            <span class="eq-band-name">BASSES (80 Hz)</span>
-                            <input type="range" id="eq-slider-low" min="0" max="100" value="50" class="analog-slider">
-                            <span id="eq-val-low" class="eq-val-display">50</span>
-                        </div>
-
-                        <div class="eq-channel">
-                            <span class="eq-band-name">MÉDIUMS (1 kHz)</span>
-                            <input type="range" id="eq-slider-mid" min="0" max="100" value="50" class="analog-slider">
-                            <span id="eq-val-mid" class="eq-val-display">50</span>
-                        </div>
-
-                        <div class="eq-channel">
-                            <span class="eq-band-name">AIGUS (12 kHz)</span>
-                            <input type="range" id="eq-slider-high" min="0" max="100" value="50" class="analog-slider">
-                            <span id="eq-val-high" class="eq-val-display">50</span>
-                        </div>
-                    </div>
-
-                    <button id="test-eq-btn" class="test-eq-btn">
-                        🎚️ TESTER LE MASTERING & APPLIQUER LE BOOST
-                    </button>
-                </div>
-            </section>
-
             <!-- Onglet Boosters -->
             <section id="boosters-tab" class="tab-content">
                 <h2>⚡ Boosters Temporaires</h2>
                 <p class="tab-subtitle">Activez des stimulants de studio pour accélérer drastiquement votre production.</p>
                 <div id="boosters-list" class="boosters-grid"></div>
-            </section>
-
-            <!-- Onglet Contrats -->
-            <section id="contracts-tab" class="tab-content">
-                <h2>📋 Contrats & Commandes d'Artistes</h2>
-                <p class="tab-subtitle">Répondez aux demandes des labels et stars pour empocher de grosses primes.</p>
-                <div id="contracts-list" class="contracts-grid"></div>
             </section>
 
             <!-- Onglet Succès -->
@@ -882,11 +754,8 @@
     <script src="js/upgrades.js"></script>
     <script src="js/sequencer.js"></script>
     <script src="js/artists.js"></script>
-    <script src="js/charts_board.js"></script>
     <script src="js/quests.js"></script>
-    <script src="js/albums.js"></script>
     <script src="js/minigame.js"></script>
-    <script src="js/contracts.js"></script>
     <script src="js/production.js"></script>
     <script src="js/boosters.js"></script>
     <script src="js/achievements.js"></script>
