@@ -778,120 +778,24 @@ function setSequencerBpm(newBpm) {
 }
 
 /**
- * Évaluation Musicale Intelligente du Séquenceur (Anti-Spam / Anti-Saturation) :
- * Récompense l'aération rythmique, la synchronisation, la diversité mélodique et le groove musical,
- * et pénalise lourdement le spam / remplissage aveugle de tous les boutons.
+ * Calcule le bonus de Studio du Séquenceur :
+ * - Dépend uniquement des instruments de studio débloqués (+10% de production par instrument).
+ * - Ajoute un bonus de Session Live (+25%) lorsque le séquenceur est en lecture.
+ * - Le nombre de notes n'influence pas le gain d'argent : le joueur compose librement ce qui lui plaît !
  */
 function calculateGrooveBonus() {
     if (!GameState.sequencer) return 1.0;
 
-    const stepCount = getSequencerStepCount();
     let unlockedCount = 0;
-    let activeTracksCount = 0;
-    let totalTrackScores = 0;
-    let totalActiveNotes = 0;
-
-    const tracks = GameState.sequencer.tracks || {};
-
-    // 1. Analyse par piste : Densité idéale, aération et diversité mélodique
     INSTRUMENT_DEFS.forEach(inst => {
-        if (!isInstrumentUnlocked(inst.id)) return;
-        unlockedCount++;
-
-        const trackArr = tracks[inst.id] ? tracks[inst.id].slice(0, stepCount) : [];
-        const activeSteps = trackArr.filter(Boolean).length;
-        totalActiveNotes += activeSteps;
-
-        if (activeSteps === 0) return; // Piste muette, neutre
-
-        activeTracksCount++;
-        const density = activeSteps / stepCount; // 0.0 à 1.0
-
-        // Modèle de densité musicale (Sweet spot : 15% à 40% de notes actives par piste)
-        let densityScore = 1.0;
-        if (density >= 0.15 && density <= 0.40) {
-            densityScore = 1.0; // Idéal (groove aéré, respiration rythmique)
-        } else if (density < 0.15) {
-            densityScore = 0.5 + (density / 0.15) * 0.5; // Minimal / ambiant
-        } else if (density <= 0.55) {
-            densityScore = 1.0 - ((density - 0.40) / 0.15) * 0.25; // Bon
-        } else {
-            // Surcharge / Spam (> 55% de notes sur la même piste)
-            // Plus on remplit aveuglément, plus le score s'effondre
-            const over = (density - 0.55) / 0.45; // 0 à 1
-            densityScore = Math.max(0.05, 0.75 - Math.pow(over, 1.5) * 0.70);
-        }
-
-        // Richesse mélodique pour les instruments polyphoniques (variété de notes)
-        let melodicBonus = 1.0;
-        if (inst.type === 'melodic' && activeSteps >= 2) {
-            const noteSet = new Set();
-            for (let i = 0; i < stepCount; i++) {
-                if (trackArr[i]) {
-                    noteSet.add(getSequencerStepNote(inst.id, i));
-                }
-            }
-            if (noteSet.size >= 4) {
-                melodicBonus = 1.25; // Richesse harmonique élevée
-            } else if (noteSet.size >= 2) {
-                melodicBonus = 1.12; // Phrase mélodique variée
-            } else {
-                melodicBonus = 0.85; // Monotone (toujours la même note répétée)
-            }
-        }
-
-        totalTrackScores += (densityScore * melodicBonus);
+        if (isInstrumentUnlocked(inst.id)) unlockedCount++;
     });
 
-    if (activeTracksCount === 0) {
-        GameState.sequencer.grooveBonus = 0;
-        GameState.sequencer.musicalityScore = 0;
-        GameState.sequencer.grooveStatus = 'Silencieux';
-        return 1.0;
-    }
+    const isPlaying = !!(GameState.sequencer && GameState.sequencer.isPlaying);
+    const instrumentBonus = unlockedCount * 0.10; // +10% par instrument débloqué
+    const sessionBonus = isPlaying ? 0.25 : 0.0;   // +25% quand la musique tourne
 
-    // Score moyen de qualité musicale des pistes actives (0.0 à 1.25)
-    const avgTrackQuality = totalTrackScores / activeTracksCount;
-
-    // 2. Analyse de synergie globale & pénalité de cacophonie polyphonique
-    // Mesure la superposition simultanée : si 6+ instruments jouent en permanence sur chaque pas = vacarme
-    let totalCollisions = 0;
-    for (let s = 0; s < stepCount; s++) {
-        let simultaneousHits = 0;
-        INSTRUMENT_DEFS.forEach(inst => {
-            if (isInstrumentUnlocked(inst.id) && tracks[inst.id] && tracks[inst.id][s]) {
-                simultaneousHits++;
-            }
-        });
-        if (simultaneousHits >= 5) {
-            totalCollisions += (simultaneousHits - 4);
-        }
-    }
-
-    const collisionPenalty = Math.max(0.2, 1.0 - (totalCollisions / (stepCount * 2)));
-
-    // 3. Score final de musicalité normalisé (0% à 100%)
-    const rawMusicality = Math.min(1.0, avgTrackQuality * collisionPenalty);
-    const musicalityPercent = Math.round(rawMusicality * 100);
-    GameState.sequencer.musicalityScore = musicalityPercent;
-
-    // Potentiel maximum de bonus débloqué (+12% par instrument possédé, jusqu'à +156% au studio max)
-    const maxBonusMultiplier = unlockedCount * 0.12;
-
-    // Multiplicateur effectif appliqué à la production
-    GameState.sequencer.grooveBonus = rawMusicality * maxBonusMultiplier;
-
-    // Statut qualitatif clair pour le joueur
-    if (rawMusicality >= 0.85) {
-        GameState.sequencer.grooveStatus = '✨ Groove Exceptionnel';
-    } else if (rawMusicality >= 0.65) {
-        GameState.sequencer.grooveStatus = '🎵 Rythme Équilibré';
-    } else if (rawMusicality >= 0.40) {
-        GameState.sequencer.grooveStatus = '🎼 Ambiance Minimaliste';
-    } else {
-        GameState.sequencer.grooveStatus = '⚠️ Surchargé / Bruit (Aérez les pas)';
-    }
-
+    GameState.sequencer.grooveBonus = instrumentBonus + sessionBonus;
     return 1 + GameState.sequencer.grooveBonus;
 }
 
@@ -915,7 +819,7 @@ function runSequencerLoop() {
 }
 
 /**
- * Exécute un pas du séquenceur pour tous les instruments débloqués avec récompense musicale harmonieuse.
+ * Exécute un pas du séquenceur pour jouer les sons sans donner d'argent au clic/note.
  */
 function executeSequencerStep(step) {
     const tracks = GameState.sequencer.tracks || {};
@@ -929,19 +833,6 @@ function executeSequencerStep(step) {
     });
 
     if (hitCount > 0) {
-        const passive = typeof getPassiveProduction === 'function' ? getPassiveProduction() : 10;
-        
-        // Récompense calibrée sur la qualité musicale du groove (non sur le spam de boutons)
-        const musicalQuality = (GameState.sequencer && GameState.sequencer.musicalityScore) 
-            ? (GameState.sequencer.musicalityScore / 100) 
-            : 0.8;
-
-        // Récompense par pas : forte sur les rythmes musicaux aérés, minimale en cas de vacarme
-        const grooveReward = Math.max(1, (passive * 0.02) * (1 + musicalQuality * 1.5));
-        addMoney(grooveReward);
-        addFame(0.01 * musicalQuality);
-        increaseHype(1 + Math.round(musicalQuality * 2));
-
         GameState.stats.sequencerBeatsPlayed = (GameState.stats.sequencerBeatsPlayed || 0) + 1;
 
         if (typeof advanceQuestProgress === 'function') {

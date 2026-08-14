@@ -395,23 +395,17 @@ function updateSequencerUI() {
         });
 
         const bonusPct = Math.round((GameState.sequencer.grooveBonus || 0) * 100);
-        const musicalScore = GameState.sequencer.musicalityScore !== undefined ? GameState.sequencer.musicalityScore : 80;
-        const status = GameState.sequencer.grooveStatus || 'Équilibré';
+        const isPlaying = !!(GameState.sequencer && GameState.sequencer.isPlaying);
 
         grooveBadge.className = 'seq-groove-badge';
-        if (musicalScore >= 80) {
+        if (isPlaying) {
             grooveBadge.classList.add('perfect');
-            grooveBadge.textContent = `✨ Groove: +${bonusPct}% Prod (${musicalScore}% Harmonie)`;
-        } else if (musicalScore >= 50) {
-            grooveBadge.classList.add('balanced');
-            grooveBadge.textContent = `🎵 Groove: +${bonusPct}% Prod (${musicalScore}% Musical)`;
-        } else if (musicalScore === 0) {
-            grooveBadge.textContent = `Bonus Groove: +0% (Grille Silencieuse)`;
+            grooveBadge.textContent = `▶️ Session Live : +${bonusPct}% Prod (${unlockedCount}/${INSTRUMENT_DEFS.length} Instruments)`;
         } else {
-            grooveBadge.classList.add('warning');
-            grooveBadge.textContent = `⚠️ +${bonusPct}% Prod (${status})`;
+            grooveBadge.classList.add('balanced');
+            grooveBadge.textContent = `🎵 Polyphonie Studio : +${bonusPct}% Prod (${unlockedCount}/${INSTRUMENT_DEFS.length} Instruments)`;
         }
-        grooveBadge.title = `Bonus de production de votre composition : +${bonusPct}%\nQualité Musicale : ${musicalScore}%\n(Astuce : un rythme structuré et aéré rapporte le maximum de bonus ; remplir toutes les notes sans espace provoque du vacarme et réduit le bonus !)`;
+        grooveBadge.title = `Bonus passif de studio : +${bonusPct}% Production (+10% par instrument débloqué, +25% en lecture live).\nComposez librement le motif musical de votre choix sur 2, 4, 8, 16 ou 32 temps sans impact du nombre de notes !`;
     }
 
     const presetSelect = document.getElementById('seq-preset-select');
