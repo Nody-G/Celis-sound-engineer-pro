@@ -747,47 +747,254 @@
         </div>
     </div>
 
-    <!-- Modale Rack d'Effets DSP & Réglages de l'Instrument (Channel Strip) -->
+    <!-- Modale Pro Studio Sound Design & Rack d'Effets DSP Modulaire -->
     <div id="fx-modal" class="studio-modal">
         <div class="modal-content fx-popup">
             <div class="modal-header fx-modal-header">
                 <div class="fx-header-title-box">
                     <span id="fx-modal-icon" class="fx-modal-icon">🎛️</span>
                     <div>
-                        <h3 id="fx-modal-title">Réglages & Effets DSP</h3>
-                        <span id="fx-modal-subtitle" class="fx-modal-subtitle">Tranche de Console & Rack d'Effets Studio</span>
+                        <h3 id="fx-modal-title">Studio Sound Designer Pro</h3>
+                        <span id="fx-modal-subtitle" class="fx-modal-subtitle">Synthétiseur Modulaire & Rack d'Effets DSP Temps Réel</span>
                     </div>
                 </div>
                 <div class="fx-header-actions">
+                    <button class="fx-random-btn" id="fx-random-btn" title="Générer un patch sonore unique et musical">🎲 Patch Mystère</button>
                     <button class="fx-preview-btn" id="fx-preview-btn" title="Tester le son en direct avec les réglages">🔊 Tester</button>
                     <button class="modal-close" id="close-fx-modal">&times;</button>
                 </div>
             </div>
+            
             <div class="modal-body fx-modal-body">
-                <!-- Section 1 : Presets Rapides -->
-                <div class="fx-presets-bar">
-                    <span class="fx-section-label">⚡ Presets Studio :</span>
-                    <div class="fx-preset-tags">
-                        <button class="fx-preset-tag" data-preset="clean">✨ Clean</button>
-                        <button class="fx-preset-tag" data-preset="space_reverb">🌌 Reverb Hall</button>
-                        <button class="fx-preset-tag" data-preset="dub_delay">⏱️ Dub Echo</button>
-                        <button class="fx-preset-tag" data-preset="warm_vintage">🔥 Vintage Tube</button>
-                        <button class="fx-preset-tag" data-preset="acid_crunch">⚡ Acid Crunch</button>
-                        <button class="fx-preset-tag" data-preset="wide_chorus">🌊 Stereo Chorus</button>
-                        <button class="fx-preset-tag" data-preset="lofi_tape">📼 Lo-Fi Tape</button>
+                <!-- Section Haut : Oscilloscope Temps Réel & Presets Sonores -->
+                <div class="fx-top-screen-row">
+                    <div class="fx-scope-box">
+                        <div class="fx-scope-header">
+                            <span class="fx-scope-title">📊 OSCILLOSCOPE AUDIO TEMPS RÉEL</span>
+                            <span class="fx-scope-status" id="fx-scope-status">LIVE DSP</span>
+                        </div>
+                        <canvas id="fx-oscilloscope-canvas" class="fx-oscilloscope-canvas" width="420" height="85"></canvas>
+                    </div>
+
+                    <div class="fx-presets-box">
+                        <span class="fx-section-label">⚡ BANQUE DE PATCHS PRO :</span>
+                        <div class="fx-preset-tags">
+                            <button class="fx-preset-tag" data-preset="clean">✨ Clean Studio</button>
+                            <button class="fx-preset-tag" data-preset="supersaw_80s">🌆 SuperSaw 80s</button>
+                            <button class="fx-preset-tag" data-preset="fat_sub_drive">🔥 Fat 808 Sub</button>
+                            <button class="fx-preset-tag" data-preset="cyber_fuzz">⚡ Cyberpunk Fuzz</button>
+                            <button class="fx-preset-tag" data-preset="lofi_bitcrush">📼 Lo-Fi 8-Bit</button>
+                            <button class="fx-preset-tag" data-preset="shimmer_ambient">🌌 Shimmer Cloud</button>
+                            <button class="fx-preset-tag" data-preset="dub_pingpong">⏱️ Dub Ping-Pong</button>
+                            <button class="fx-preset-tag" data-preset="acid_screamer">🧪 Acid 303 Squelch</button>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Grille des Panneaux de Réglages -->
+                <!-- Grille des Modules de Sound Design -->
                 <div class="fx-panels-grid">
-                    <!-- Panneau 1 : Tranche de Mixage (Volume, Pan, Pitch, Mute/Solo) -->
-                    <div class="fx-card mix-card">
+                    <!-- Module 1 : Oscillateur & Unison / Super-Detune -->
+                    <div class="fx-card synth-card" id="fx-synth-card">
                         <div class="fx-card-header">
-                            <span class="fx-card-title">🎚️ MIX & PANORAMIQUE</span>
+                            <span class="fx-card-title">🎹 1. OSCILLATEUR & UNISON</span>
+                        </div>
+                        <div class="fx-control-group">
+                            <label class="fx-micro-label">Forme d'Onde Fondamentale</label>
+                            <div class="fx-waveform-pills" id="fx-waveform-pills">
+                                <button class="fx-wave-pill active" data-wave="default">Origine</button>
+                                <button class="fx-wave-pill" data-wave="sawtooth">Dent de Scie</button>
+                                <button class="fx-wave-pill" data-wave="square">Carrée</button>
+                                <button class="fx-wave-pill" data-wave="sine">Sinus</button>
+                                <button class="fx-wave-pill" data-wave="triangle">Triangle</button>
+                            </div>
                         </div>
                         <div class="fx-control-group">
                             <div class="fx-param-row">
-                                <label for="fx-volume-slider">Volume / Gain</label>
+                                <label for="fx-unison-select">Voix Unison (Stéréo Fat)</label>
+                                <div class="fx-unison-pills" id="fx-unison-pills">
+                                    <button class="fx-unison-pill active" data-unison="1">1 Voix</button>
+                                    <button class="fx-unison-pill" data-unison="2">2 Voix (Stereo)</button>
+                                    <button class="fx-unison-pill" data-unison="3">3 Voix (SuperSaw)</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="fx-control-group">
+                            <div class="fx-param-row">
+                                <label for="fx-detune-slider">Désaccordage (Detune Cents)</label>
+                                <span id="fx-detune-val" class="fx-val-badge">0 cents</span>
+                            </div>
+                            <input type="range" id="fx-detune-slider" min="0" max="25" value="0" class="fx-slider">
+                        </div>
+                        <div class="fx-control-group">
+                            <label class="fx-checkbox-label">
+                                <input type="checkbox" id="fx-subosc-toggle">
+                                <span>➕ Sub-Oscillateur (-1 Octave Sine pour Basses Lourdes)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Module 2 : Enveloppe ADSR -->
+                    <div class="fx-card adsr-card">
+                        <div class="fx-card-header">
+                            <span class="fx-card-title">🎚️ 2. ENVELOPPE ADSR (DYNAMIQUE)</span>
+                        </div>
+                        <div class="fx-adsr-grid">
+                            <div class="fx-control-group">
+                                <div class="fx-param-row">
+                                    <label for="fx-attack-slider">Attack</label>
+                                    <span id="fx-attack-val" class="fx-val-badge">10 ms</span>
+                                </div>
+                                <input type="range" id="fx-attack-slider" min="2" max="1000" step="2" value="10" class="fx-slider">
+                            </div>
+                            <div class="fx-control-group">
+                                <div class="fx-param-row">
+                                    <label for="fx-decay-slider">Decay</label>
+                                    <span id="fx-decay-val" class="fx-val-badge">150 ms</span>
+                                </div>
+                                <input type="range" id="fx-decay-slider" min="10" max="1500" step="10" value="150" class="fx-slider">
+                            </div>
+                            <div class="fx-control-group">
+                                <div class="fx-param-row">
+                                    <label for="fx-sustain-slider">Sustain</label>
+                                    <span id="fx-sustain-val" class="fx-val-badge">60%</span>
+                                </div>
+                                <input type="range" id="fx-sustain-slider" min="0" max="100" value="60" class="fx-slider">
+                            </div>
+                            <div class="fx-control-group">
+                                <div class="fx-param-row">
+                                    <label for="fx-release-slider">Release</label>
+                                    <span id="fx-release-val" class="fx-val-badge">200 ms</span>
+                                </div>
+                                <input type="range" id="fx-release-slider" min="20" max="2500" step="10" value="200" class="fx-slider">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Module 3 : Filtre & LFO Modulation -->
+                    <div class="fx-card lfo-card">
+                        <div class="fx-card-header">
+                            <span class="fx-card-title">🎛️ 3. FILTRE ANALOGIQUE & LFO</span>
+                        </div>
+                        <div class="fx-filter-types">
+                            <button class="fx-filter-pill active" data-type="lowpass">Passe-Bas</button>
+                            <button class="fx-filter-pill" data-type="highpass">Passe-Haut</button>
+                            <button class="fx-filter-pill" data-type="bandpass">Passe-Bande</button>
+                        </div>
+                        <div class="fx-control-group">
+                            <div class="fx-param-row">
+                                <label for="fx-cutoff-slider">Coupure (Cutoff)</label>
+                                <span id="fx-cutoff-val" class="fx-val-badge">20.0 kHz</span>
+                            </div>
+                            <input type="range" id="fx-cutoff-slider" min="100" max="20000" step="100" value="20000" class="fx-slider">
+                        </div>
+                        <div class="fx-control-group">
+                            <div class="fx-param-row">
+                                <label for="fx-resonance-slider">Résonance (Q Factor)</label>
+                                <span id="fx-resonance-val" class="fx-val-badge">1.0</span>
+                            </div>
+                            <input type="range" id="fx-resonance-slider" min="0.1" max="15" step="0.1" value="1.0" class="fx-slider">
+                        </div>
+                        <div class="fx-lfo-row">
+                            <div class="fx-control-group" style="flex:1;">
+                                <label class="fx-micro-label">Cible LFO</label>
+                                <select id="fx-lfo-target-select" class="fx-select">
+                                    <option value="cutoff">🎛️ Filtre (Auto-Wah / Wobble)</option>
+                                    <option value="volume">🔊 Volume (Tremolo)</option>
+                                    <option value="pan">🎧 Panoramique (Auto-Pan 3D)</option>
+                                    <option value="pitch">🎵 Pitch (Vibrato)</option>
+                                </select>
+                            </div>
+                            <div class="fx-control-group" style="flex:1;">
+                                <div class="fx-param-row">
+                                    <label for="fx-lfo-depth-slider">Intensité LFO</label>
+                                    <span id="fx-lfo-depth-val" class="fx-val-badge">0%</span>
+                                </div>
+                                <input type="range" id="fx-lfo-depth-slider" min="0" max="100" value="0" class="fx-slider">
+                            </div>
+                        </div>
+                        <div class="fx-control-group">
+                            <div class="fx-param-row">
+                                <label for="fx-lfo-rate-slider">Vitesse LFO (Rate)</label>
+                                <span id="fx-lfo-rate-val" class="fx-val-badge">2.0 Hz</span>
+                            </div>
+                            <input type="range" id="fx-lfo-rate-slider" min="0.2" max="20" step="0.1" value="2.0" class="fx-slider">
+                        </div>
+                    </div>
+
+                    <!-- Module 4 : Effets Spatiaux & Saturation Multi-Modes -->
+                    <div class="fx-card dsp-card">
+                        <div class="fx-card-header">
+                            <span class="fx-card-title">🌌 4. RACK D'EFFETS DSP SPATIAUX</span>
+                        </div>
+                        <!-- Saturation Multi-Modes -->
+                        <div class="fx-dist-modes-row">
+                            <span class="fx-micro-label">Mode Saturation :</span>
+                            <div class="fx-dist-pills" id="fx-dist-pills">
+                                <button class="fx-dist-pill active" data-dist="tube">🔥 Lampe</button>
+                                <button class="fx-dist-pill" data-dist="fuzz">⚡ Fuzz</button>
+                                <button class="fx-dist-pill" data-dist="crush">📼 Bitcrush</button>
+                            </div>
+                        </div>
+                        <div class="fx-control-group">
+                            <div class="fx-param-row">
+                                <label for="fx-drive-slider">Taux de Drive / Saturation</label>
+                                <span id="fx-drive-val" class="fx-val-badge">0%</span>
+                            </div>
+                            <input type="range" id="fx-drive-slider" min="0" max="100" value="0" class="fx-slider">
+                        </div>
+
+                        <!-- Reverb Multi-Modes -->
+                        <div class="fx-reverb-modes-row">
+                            <span class="fx-micro-label">Mode Réverbération :</span>
+                            <div class="fx-reverb-pills" id="fx-reverb-pills">
+                                <button class="fx-reverb-pill active" data-rev="hall">🌌 Hall</button>
+                                <button class="fx-reverb-pill" data-rev="plate">🏢 Plate</button>
+                                <button class="fx-reverb-pill" data-rev="shimmer">✨ Shimmer</button>
+                                <button class="fx-reverb-pill" data-rev="space">🛰️ Espace</button>
+                            </div>
+                        </div>
+                        <div class="fx-control-group">
+                            <div class="fx-param-row">
+                                <label for="fx-reverb-slider">Réverbération (Mix)</label>
+                                <span id="fx-reverb-val" class="fx-val-badge">0%</span>
+                            </div>
+                            <input type="range" id="fx-reverb-slider" min="0" max="100" value="0" class="fx-slider">
+                        </div>
+
+                        <!-- Delay Ping-Pong & Synchro BPM -->
+                        <div class="fx-delay-modes-row">
+                            <div class="fx-control-group" style="flex:1;">
+                                <label class="fx-micro-label">Synchro BPM Delay</label>
+                                <select id="fx-delaysync-select" class="fx-select">
+                                    <option value="1/8">1/8 (Croche)</option>
+                                    <option value="1/8d">1/8 Dotted (Pointée)</option>
+                                    <option value="1/4">1/4 (Noire)</option>
+                                    <option value="1/16">1/16 (Double)</option>
+                                    <option value="free">Libre (ms)</option>
+                                </select>
+                            </div>
+                            <label class="fx-checkbox-label" style="align-self:flex-end;">
+                                <input type="checkbox" id="fx-pingpong-toggle">
+                                <span>🏓 Ping-Pong Stéréo</span>
+                            </label>
+                        </div>
+                        <div class="fx-control-group">
+                            <div class="fx-param-row">
+                                <label for="fx-delay-slider">Delay / Écho (Mix & Feedback)</label>
+                                <span id="fx-delay-val" class="fx-val-badge">0%</span>
+                            </div>
+                            <input type="range" id="fx-delay-slider" min="0" max="100" value="0" class="fx-slider">
+                        </div>
+                    </div>
+
+                    <!-- Module 5 : Mixage & Panoramique -->
+                    <div class="fx-card mix-card">
+                        <div class="fx-card-header">
+                            <span class="fx-card-title">🎚️ 5. TRANCHE DE MIXAGE & PAN</span>
+                        </div>
+                        <div class="fx-control-group">
+                            <div class="fx-param-row">
+                                <label for="fx-volume-slider">Volume / Fader</label>
                                 <span id="fx-volume-val" class="fx-val-badge">100%</span>
                             </div>
                             <input type="range" id="fx-volume-slider" min="0" max="150" value="100" class="fx-slider">
@@ -811,83 +1018,17 @@
                             <button id="fx-solo-toggle" class="fx-toggle-btn solo">SOLO [S]</button>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Panneau 2 : Égaliseur & Filtre Analogique -->
-                    <div class="fx-card eq-card">
-                        <div class="fx-card-header">
-                            <span class="fx-card-title">🎛️ FILTRE & ÉGALISEUR ANALOGIQUE</span>
-                        </div>
-                        <div class="fx-filter-types">
-                            <button class="fx-filter-pill active" data-type="lowpass">Passe-Bas</button>
-                            <button class="fx-filter-pill" data-type="highpass">Passe-Haut</button>
-                            <button class="fx-filter-pill" data-type="bandpass">Passe-Bande</button>
-                        </div>
-                        <div class="fx-control-group">
-                            <div class="fx-param-row">
-                                <label for="fx-cutoff-slider">Fréquence de Coupure (Cutoff)</label>
-                                <span id="fx-cutoff-val" class="fx-val-badge">20.0 kHz</span>
-                            </div>
-                            <input type="range" id="fx-cutoff-slider" min="100" max="20000" step="100" value="20000" class="fx-slider">
-                        </div>
-                        <div class="fx-control-group">
-                            <div class="fx-param-row">
-                                <label for="fx-resonance-slider">Résonance (Q Factor)</label>
-                                <span id="fx-resonance-val" class="fx-val-badge">1.0</span>
-                            </div>
-                            <input type="range" id="fx-resonance-slider" min="0.1" max="15" step="0.1" value="1.0" class="fx-slider">
-                        </div>
+                <!-- Mini-Clavier Virtuel / Trigger Pads Jouables en Direct -->
+                <div class="fx-keyboard-container">
+                    <div class="fx-keyboard-header">
+                        <span class="fx-keyboard-title">🎹 TESTEUR DE TOUCHES EN DIRECT (Cliquez ou utilisez les touches [A..K] / [1..8])</span>
                     </div>
-
-                    <!-- Panneau 3 : Rack d'Effets DSP (Reverb & Delay & Drive) -->
-                    <div class="fx-card dsp-card">
-                        <div class="fx-card-header">
-                            <span class="fx-card-title">🌌 RACK D'EFFETS DSP SPATIAUX</span>
-                        </div>
-                        <div class="fx-control-group">
-                            <div class="fx-param-row">
-                                <label for="fx-reverb-slider">🌌 Réverbération Espace (Mix)</label>
-                                <span id="fx-reverb-val" class="fx-val-badge">0%</span>
-                            </div>
-                            <input type="range" id="fx-reverb-slider" min="0" max="100" value="0" class="fx-slider">
-                        </div>
-                        <div class="fx-control-group">
-                            <div class="fx-param-row">
-                                <label for="fx-delay-slider">⏱️ Delay / Écho Stéréo (Mix)</label>
-                                <span id="fx-delay-val" class="fx-val-badge">0%</span>
-                            </div>
-                            <input type="range" id="fx-delay-slider" min="0" max="100" value="0" class="fx-slider">
-                        </div>
-                        <div class="fx-control-group">
-                            <div class="fx-param-row">
-                                <label for="fx-delaytime-slider">Temps & Feedback du Delay</label>
-                                <span id="fx-delaytime-val" class="fx-val-badge">250 ms (40% FB)</span>
-                            </div>
-                            <input type="range" id="fx-delaytime-slider" min="50" max="600" step="10" value="250" class="fx-slider">
-                        </div>
-                        <div class="fx-control-group">
-                            <div class="fx-param-row">
-                                <label for="fx-drive-slider">🔥 Saturation Lampe / Overdrive</label>
-                                <span id="fx-drive-val" class="fx-val-badge">0%</span>
-                            </div>
-                            <input type="range" id="fx-drive-slider" min="0" max="100" value="0" class="fx-slider">
-                        </div>
-                    </div>
-
-                    <!-- Panneau 4 : Synthèse & Timbre (pour pistes mélodiques) -->
-                    <div class="fx-card synth-card" id="fx-synth-card">
-                        <div class="fx-card-header">
-                            <span class="fx-card-title">🎹 TIMBRE & FORME D'ONDE</span>
-                        </div>
-                        <div class="fx-waveform-pills" id="fx-waveform-pills">
-                            <button class="fx-wave-pill active" data-wave="default">Origine</button>
-                            <button class="fx-wave-pill" data-wave="sine">Sinus</button>
-                            <button class="fx-wave-pill" data-wave="sawtooth">Dent de scie</button>
-                            <button class="fx-wave-pill" data-wave="square">Carrée</button>
-                            <button class="fx-wave-pill" data-wave="triangle">Triangle</button>
-                        </div>
-                    </div>
+                    <div id="fx-mini-keyboard" class="fx-mini-keyboard"></div>
                 </div>
             </div>
+
             <div class="modal-footer fx-footer">
                 <button class="modal-secondary-btn" id="fx-reset-btn">🔄 Réinitialiser la piste</button>
                 <button class="modal-primary-btn" id="fx-apply-btn">✓ APPLIQUER & FERMER</button>

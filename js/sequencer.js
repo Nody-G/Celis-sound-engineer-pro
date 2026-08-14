@@ -356,113 +356,104 @@ function shiftSequencerStepNote(trackId, stepIndex, semitoneDelta) {
 const TRACK_FX_PRESETS = {
     clean: {
         name: '✨ Clean Studio',
-        volume: 1.0,
-        pan: 0.0,
-        pitch: 0,
-        filterType: 'lowpass',
-        cutoff: 20000,
-        resonance: 1.0,
-        drive: 0.0,
-        reverb: 0.0,
-        delay: 0.0,
-        delayTime: 0.25,
-        delayFeedback: 0.4,
-        waveform: 'default'
+        volume: 1.0, pan: 0.0, pitch: 0,
+        filterType: 'lowpass', cutoff: 20000, resonance: 1.0,
+        drive: 0.0, distMode: 'tube',
+        reverb: 0.0, reverbMode: 'hall',
+        delay: 0.0, delayTime: 0.25, delayFeedback: 0.4, delaySync: '1/8', delayPingPong: false,
+        waveform: 'default',
+        attack: 0.01, decay: 0.15, sustain: 0.6, release: 0.2,
+        unison: 1, detune: 0, subOsc: false,
+        lfoRate: 2.0, lfoDepth: 0.0, lfoTarget: 'cutoff', lfoWave: 'sine'
     },
-    space_reverb: {
-        name: '🌌 Espace Reverb Hall',
-        volume: 1.0,
-        pan: 0.0,
-        pitch: 0,
-        filterType: 'lowpass',
-        cutoff: 14000,
-        resonance: 1.2,
-        drive: 0.0,
-        reverb: 0.70,
-        delay: 0.20,
-        delayTime: 0.35,
-        delayFeedback: 0.45,
-        waveform: 'default'
+    supersaw_80s: {
+        name: '🌆 80s SuperSaw Lead',
+        volume: 1.0, pan: 0.0, pitch: 0,
+        filterType: 'lowpass', cutoff: 12000, resonance: 2.2,
+        drive: 0.15, distMode: 'tube',
+        reverb: 0.45, reverbMode: 'hall',
+        delay: 0.35, delayTime: 0.375, delayFeedback: 0.5, delaySync: '1/8d', delayPingPong: true,
+        waveform: 'sawtooth',
+        attack: 0.01, decay: 0.25, sustain: 0.7, release: 0.35,
+        unison: 3, detune: 14, subOsc: true,
+        lfoRate: 3.5, lfoDepth: 0.15, lfoTarget: 'pitch', lfoWave: 'sine'
     },
-    dub_delay: {
-        name: '⏱️ Dub Echo Delay',
-        volume: 1.0,
-        pan: -0.2,
-        pitch: 0,
-        filterType: 'bandpass',
-        cutoff: 2200,
-        resonance: 3.0,
-        drive: 0.15,
-        reverb: 0.25,
-        delay: 0.65,
-        delayTime: 0.375,
-        delayFeedback: 0.65,
-        waveform: 'default'
+    fat_sub_drive: {
+        name: '🔥 Fat 808 Tube Sub',
+        volume: 1.15, pan: 0.0, pitch: 0,
+        filterType: 'lowpass', cutoff: 2200, resonance: 1.5,
+        drive: 0.65, distMode: 'tube',
+        reverb: 0.05, reverbMode: 'plate',
+        delay: 0.0, delayTime: 0.2, delayFeedback: 0.2, delaySync: '1/8', delayPingPong: false,
+        waveform: 'sine',
+        attack: 0.005, decay: 0.4, sustain: 0.8, release: 0.4,
+        unison: 1, detune: 0, subOsc: true,
+        lfoRate: 0.5, lfoDepth: 0.0, lfoTarget: 'cutoff', lfoWave: 'sine'
     },
-    warm_vintage: {
-        name: '🔥 Saturation Lampe Vintage',
-        volume: 1.1,
-        pan: 0.0,
-        pitch: 0,
-        filterType: 'lowpass',
-        cutoff: 7500,
-        resonance: 1.8,
-        drive: 0.50,
-        reverb: 0.20,
-        delay: 0.10,
-        delayTime: 0.20,
-        delayFeedback: 0.35,
-        waveform: 'default'
+    cyber_fuzz: {
+        name: '⚡ Cyberpunk Neuro Fuzz',
+        volume: 0.95, pan: 0.0, pitch: 0,
+        filterType: 'lowpass', cutoff: 5500, resonance: 6.0,
+        drive: 0.85, distMode: 'fuzz',
+        reverb: 0.25, reverbMode: 'plate',
+        delay: 0.30, delayTime: 0.25, delayFeedback: 0.55, delaySync: '1/16', delayPingPong: true,
+        waveform: 'sawtooth',
+        attack: 0.005, decay: 0.18, sustain: 0.4, release: 0.2,
+        unison: 2, detune: 18, subOsc: true,
+        lfoRate: 6.0, lfoDepth: 0.45, lfoTarget: 'cutoff', lfoWave: 'triangle'
     },
-    acid_crunch: {
-        name: '⚡ Acid Overdrive Crunch',
-        volume: 0.95,
-        pan: 0.15,
-        pitch: 0,
-        filterType: 'lowpass',
-        cutoff: 4000,
-        resonance: 8.5,
-        drive: 0.80,
-        reverb: 0.15,
-        delay: 0.30,
-        delayTime: 0.18,
-        delayFeedback: 0.50,
-        waveform: 'sawtooth'
+    lofi_bitcrush: {
+        name: '📼 Lo-Fi 8-Bit Retro',
+        volume: 1.0, pan: -0.1, pitch: 0,
+        filterType: 'lowpass', cutoff: 3800, resonance: 2.5,
+        drive: 0.50, distMode: 'crush',
+        reverb: 0.30, reverbMode: 'plate',
+        delay: 0.25, delayTime: 0.3, delayFeedback: 0.45, delaySync: '1/8', delayPingPong: false,
+        waveform: 'square',
+        attack: 0.01, decay: 0.15, sustain: 0.5, release: 0.2,
+        unison: 1, detune: 0, subOsc: false,
+        lfoRate: 1.2, lfoDepth: 0.25, lfoTarget: 'pitch', lfoWave: 'sine'
     },
-    wide_chorus: {
-        name: '🌊 Chorus Dimension 80s',
-        volume: 1.0,
-        pan: 0.0,
-        pitch: 0,
-        filterType: 'highpass',
-        cutoff: 220,
-        resonance: 1.0,
-        drive: 0.05,
-        reverb: 0.40,
-        delay: 0.25,
-        delayTime: 0.22,
-        delayFeedback: 0.40,
-        waveform: 'default'
+    shimmer_ambient: {
+        name: '🌌 Shimmer Cloud Ambient',
+        volume: 1.0, pan: 0.1, pitch: 0,
+        filterType: 'highpass', cutoff: 280, resonance: 1.2,
+        drive: 0.05, distMode: 'tube',
+        reverb: 0.85, reverbMode: 'shimmer',
+        delay: 0.50, delayTime: 0.5, delayFeedback: 0.65, delaySync: '1/4', delayPingPong: true,
+        waveform: 'triangle',
+        attack: 0.35, decay: 0.8, sustain: 0.85, release: 1.2,
+        unison: 3, detune: 10, subOsc: false,
+        lfoRate: 0.8, lfoDepth: 0.35, lfoTarget: 'pan', lfoWave: 'sine'
     },
-    lofi_tape: {
-        name: '📼 Cassette Lo-Fi Tape',
-        volume: 1.05,
-        pan: -0.1,
-        pitch: 0,
-        filterType: 'lowpass',
-        cutoff: 3200,
-        resonance: 2.2,
-        drive: 0.35,
-        reverb: 0.30,
-        delay: 0.20,
-        delayTime: 0.28,
-        delayFeedback: 0.45,
-        waveform: 'default'
+    dub_pingpong: {
+        name: '⏱️ Dub Echo Ping-Pong',
+        volume: 1.0, pan: 0.0, pitch: 0,
+        filterType: 'bandpass', cutoff: 1800, resonance: 3.5,
+        drive: 0.25, distMode: 'tube',
+        reverb: 0.35, reverbMode: 'hall',
+        delay: 0.70, delayTime: 0.375, delayFeedback: 0.75, delaySync: '1/8d', delayPingPong: true,
+        waveform: 'sawtooth',
+        attack: 0.005, decay: 0.12, sustain: 0.2, release: 0.15,
+        unison: 1, detune: 0, subOsc: false,
+        lfoRate: 2.0, lfoDepth: 0.30, lfoTarget: 'cutoff', lfoWave: 'sine'
+    },
+    acid_screamer: {
+        name: '🧪 Acid 303 Resonance Squelch',
+        volume: 0.95, pan: 0.0, pitch: 0,
+        filterType: 'lowpass', cutoff: 3200, resonance: 12.0,
+        drive: 0.60, distMode: 'fuzz',
+        reverb: 0.20, reverbMode: 'plate',
+        delay: 0.35, delayTime: 0.25, delayFeedback: 0.50, delaySync: '1/16', delayPingPong: false,
+        waveform: 'sawtooth',
+        attack: 0.005, decay: 0.14, sustain: 0.25, release: 0.18,
+        unison: 1, detune: 0, subOsc: false,
+        lfoRate: 4.0, lfoDepth: 0.55, lfoTarget: 'cutoff', lfoWave: 'sawtooth'
     }
 };
 
 /**
- * Retourne les réglages par défaut d'une piste instrument.
+ * Retourne les réglages par défaut complets d'une piste instrument.
  */
 function getDefaultTrackSettings(trackId) {
     return {
@@ -475,12 +466,81 @@ function getDefaultTrackSettings(trackId) {
         cutoff: 20000,
         resonance: 1.0,
         drive: 0.0,
+        distMode: 'tube',
         reverb: 0.0,
+        reverbMode: 'hall',
         delay: 0.0,
         delayTime: 0.25,
         delayFeedback: 0.4,
-        waveform: 'default'
+        delaySync: '1/8',
+        delayPingPong: false,
+        waveform: 'default',
+        attack: 0.01,
+        decay: 0.15,
+        sustain: 0.6,
+        release: 0.2,
+        unison: 1,
+        detune: 0,
+        subOsc: false,
+        lfoRate: 2.0,
+        lfoDepth: 0.0,
+        lfoTarget: 'cutoff',
+        lfoWave: 'sine'
     };
+}
+
+/**
+ * Génère un patch de sound design aléatoire cohérent et musical.
+ */
+function generateRandomTrackSound(trackId) {
+    const waves = ['default', 'sawtooth', 'square', 'sine', 'triangle'];
+    const distModes = ['tube', 'fuzz', 'crush'];
+    const filterTypes = ['lowpass', 'highpass', 'bandpass'];
+    const reverbModes = ['hall', 'plate', 'shimmer', 'space'];
+    const lfoTargets = ['cutoff', 'volume', 'pan', 'pitch'];
+    const delaySyncs = ['1/4', '1/8', '1/8d', '1/16', 'free'];
+
+    const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+    const rand = (min, max) => Math.round((min + Math.random() * (max - min)) * 100) / 100;
+
+    const newSettings = {
+        volume: 1.0,
+        pan: rand(-0.5, 0.5),
+        pitch: pick([0, 0, 0, -12, 12, 7, -5]),
+        mute: false,
+        solo: false,
+        filterType: pick(filterTypes),
+        cutoff: Math.round(rand(300, 18000)),
+        resonance: rand(0.5, 8.5),
+        drive: rand(0.0, 0.70),
+        distMode: pick(distModes),
+        reverb: rand(0.05, 0.70),
+        reverbMode: pick(reverbModes),
+        delay: rand(0.0, 0.60),
+        delayTime: rand(0.1, 0.5),
+        delayFeedback: rand(0.2, 0.65),
+        delaySync: pick(delaySyncs),
+        delayPingPong: Math.random() > 0.4,
+        waveform: pick(waves),
+        attack: rand(0.002, 0.25),
+        decay: rand(0.05, 0.5),
+        sustain: rand(0.1, 0.85),
+        release: rand(0.08, 0.75),
+        unison: pick([1, 1, 2, 3]),
+        detune: rand(3, 18),
+        subOsc: Math.random() > 0.5,
+        lfoRate: rand(0.5, 10.0),
+        lfoDepth: rand(0.0, 0.55),
+        lfoTarget: pick(lfoTargets),
+        lfoWave: pick(['sine', 'triangle', 'square'])
+    };
+
+    if (!GameState.sequencer) initSequencer();
+    if (!GameState.sequencer.trackSettings) GameState.sequencer.trackSettings = {};
+    GameState.sequencer.trackSettings[trackId] = newSettings;
+
+    if (typeof updateSequencerUI === 'function') updateSequencerUI();
+    return newSettings;
 }
 
 /**

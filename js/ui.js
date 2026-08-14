@@ -637,6 +637,201 @@ function openStepNotePicker(trackId, stepIndex, targetBtn, e) {
 }
 
 let activeFxTrackId = null;
+let fxOscilloscopeAnimFrame = null;
+
+/**
+ * Boucle d'animation pour l'oscilloscope temps réel de la modale Sound Design.
+ */
+function startOscilloscopeRenderLoop() {
+    const canvas = document.getElementById('fx-oscilloscope-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const analyser = (typeof getTrackAnalyser === 'function') ? getTrackAnalyser() : ((typeof getAudioAnalyser === 'function') ? getAudioAnalyser() : null);
+    const bufferLength = analyser ? analyser.frequencyBinCount : 256;
+    const dataArray = new Uint8Array(bufferLength);
+
+    const draw = () => {
+        const modal = document.getElementById('fx-modal');
+        if (!modal || !modal.classList.contains('open')) {
+            cancelAnimationFrame(fxOscilloscopeAnimFrame);
+            fxOscilloscopeAnimFrame = null;
+            return;
+        }
+
+        fxOscilloscopeAnimFrame = requestAnimationFrame(draw);
+
+        if (analyser) {
+            analyser.getByteTimeDomainData(dataArray);
+        } else {
+            dataArray.fill(128);
+        }
+
+        const width = canvas.width;
+        const height = canvas.height;
+
+        // Fond sombre avec grille subtile
+        ctx.fillStyle = 'rgba(8, 12, 22, 0.45)';
+        ctx.fillRect(0, 0, width, height);
+
+        // Grille de mesure studio
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = 'rgba(0, 242, 254, 0.08)';
+        ctx.beginPath();
+        ctx.moveTo(0, height / 2);
+        ctx.lineTo(width, height / 2);
+        ctx.moveTo(width / 4, 0);
+        ctx.lineTo(width / 4, height);
+        ctx.moveTo(width / 2, 0);
+        ctx.lineTo(width / 2, height);
+        ctx.moveTo((3 * width) / 4, 0);
+        ctx.lineTo((3 * width) / 4, height);
+        ctx.stroke();
+
+        // Tracé de l'onde néon
+        ctx.lineWidth = 2.5;
+        const gradient = ctx.createLinearGradient(0, 0, width, 0);
+        gradient.addColorStop(0, '#00f2fe');
+        gradient.addColorStop(0.5, '#00ff88');
+        gradient.addColorStop(1, '#ff007f');
+        ctx.strokeStyle = gradient;
+        ctx.shadowColor = '#00f2fe';
+        ctx.shadowBlur = 8;
+
+        ctx.beginPath();
+        const sliceWidth = width / bufferLength;
+        let x = 0;
+
+        for (let i = 0; i < bufferLength; i++) {
+            const v = dataArray[i] / 128.0;
+            const y = (v * height) / 2;
+
+            if (i === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
+            x += sliceWidth;
+        }
+
+        ctx.lineTo(width, height / 2);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+    };
+
+    if (fxOscilloscopeAnimFrame) cancelAnimationFrame(fxOscilloscopeAnimFrame);
+    draw();
+}
+
+function stopOscilloscopeRenderLoop() {
+    if (fxOscilloscopeAnimFrame) {
+        cancelAnimationFrame(fxOscilloscopeAnimFrame);
+        fxOscilloscopeAnimFrame = null;
+    }
+}
+
+/**
+ * Construit le mini-clavier de test ou les trigger pads dans la modale Sound Design.
+ */
+function renderFxMiniKeyboard(trackId) {
+    const container = document.getElementById('fx-mini-keyboard');
+    if (!container || typeof INSTRUMENT_DEFS === 'undefined') return;
+
+    const inst = INSTRUMENT_DEFS.find(i => i.id === trackId);
+    if (!inst) return;
+
+    container.innerHTML = '';
+
+    if (inst.type === 'melodic') {
+        if (trackId === 'pad') {
+            const CHORDS = ['Am', 'Cmaj', 'Dm', 'Em', 'Fmaj', 'Gmaj', 'Am7', 'Cmaj7'];
+            CHORDS.forEach((chord, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'fx-key-btn pad-key';
+                btn.innerHTML = `<span class="fx-key-note">${chord}</span><span class="fx-key-hint">[${idx + 1}]</span>`;
+                btn.addEventListener('click', () => {
+                    initAudio();
+                    playChordPadSound(chord);
+                });
+                container.appendChild(btn);
+            });
+        } else {
+            const NOTES = [
+                { note: 'C3', key: 'A', black: false },
+                { note: 'C#3', key: 'W', black: true },
+                { note: 'D3', key: 'S', black: false },
+                { note: 'D#3', key: 'E', black: true },
+                { note: 'E3', key: 'D', black: false },
+                { note: 'F3', key: 'F', black: false },
+                { note: 'F#3', key: 'T', black: true },
+                { note: 'G3', key: 'G', black: false },
+                { note: 'G#3', key: 'Y', black: true },
+                { note: 'A3', key: 'H', black: false },
+                { note: 'A#3', key: 'U', black: true },
+                { note: 'B3', key: 'J', black: false },
+                { note: 'C4', key: 'K', black: false }
+            ];
+
+            const pianoRow = document.createElement('div');
+            pianoRow.className = 'fx-piano-keys-row';
+
+            NOTES.forEach(item => {
+                const keyEl = document.createElement('button');
+                keyEl.className = `fx-piano-key ${item.black ? 'black-key' : 'white-key'}`;
+                keyEl.dataset.note = item.note;
+                keyEl.dataset.shortcut = item.key;
+                keyEl.innerHTML = `<span class="fx-key-note">${item.note}</span><span class="fx-key-shortcut">${item.key}</span>`;
+
+                keyEl.addEventListener('mousedown', () => {
+                    initAudio();
+                    playTrackSound(trackId, item.note);
+                    keyEl.classList.add('pressed');
+                });
+                keyEl.addEventListener('mouseup', () => keyEl.classList.remove('pressed'));
+                keyEl.addEventListener('mouseleave', () => keyEl.classList.remove('pressed'));
+
+                pianoRow.appendChild(keyEl);
+            });
+
+            container.appendChild(pianoRow);
+        }
+    } else {
+        // Percussions & Beats (Pads de déclenchement avec variations de pitch)
+        const PITCH_VARIATIONS = [
+            { label: 'Low Pitch', mult: 0.75, key: '1' },
+            { label: 'Deep', mult: 0.85, key: '2' },
+            { label: 'Standard', mult: 1.0, key: '3' },
+            { label: 'Punchy', mult: 1.15, key: '4' },
+            { label: 'Crisp', mult: 1.30, key: '5' },
+            { label: 'Snap', mult: 1.50, key: '6' },
+            { label: 'High Tone', mult: 1.75, key: '7' },
+            { label: 'Top Accent', mult: 2.0, key: '8' }
+        ];
+
+        const padsRow = document.createElement('div');
+        padsRow.className = 'fx-drum-pads-row';
+
+        PITCH_VARIATIONS.forEach(item => {
+            const pad = document.createElement('button');
+            pad.className = 'fx-drum-pad-btn';
+            pad.innerHTML = `<span class="fx-pad-icon">${inst.icon}</span><span class="fx-pad-name">${item.label}</span><span class="fx-key-hint">[${item.key}]</span>`;
+
+            pad.addEventListener('mousedown', () => {
+                initAudio();
+                if (trackId === 'kick') playKickSound(140 * item.mult);
+                else playTrackSound(trackId);
+                pad.classList.add('pressed');
+            });
+            pad.addEventListener('mouseup', () => pad.classList.remove('pressed'));
+            pad.addEventListener('mouseleave', () => pad.classList.remove('pressed'));
+
+            padsRow.appendChild(pad);
+        });
+
+        container.appendChild(padsRow);
+    }
+}
 
 /**
  * Ouvre la modale de réglages et d'effets DSP pour l'instrument sélectionné.
@@ -654,7 +849,7 @@ function openInstrumentFxModal(trackId) {
     const iconEl = document.getElementById('fx-modal-icon');
 
     if (titleEl) titleEl.textContent = `🎛️ ${inst.name}`;
-    if (subtitleEl) subtitleEl.textContent = `Piste [${inst.tag}] • Tranche de Mixage & Effets DSP`;
+    if (subtitleEl) subtitleEl.textContent = `Piste [${inst.tag}] • Synthétiseur Modulaire & Rack d'Effets DSP`;
     if (iconEl) iconEl.textContent = inst.icon;
 
     // Affichage ou masquage de la carte de synthèse / forme d'onde
@@ -664,7 +859,11 @@ function openInstrumentFxModal(trackId) {
     }
 
     updateFxModalControls(trackId);
+    renderFxMiniKeyboard(trackId);
     modal.classList.add('open');
+
+    // Démarrage de l'oscilloscope temps réel
+    startOscilloscopeRenderLoop();
 }
 
 /**
@@ -710,6 +909,61 @@ function updateFxModalControls(trackId) {
         else soloToggle.classList.remove('active');
     }
 
+    // Waveform Pills
+    const wavePills = document.querySelectorAll('.fx-wave-pill');
+    wavePills.forEach(pill => {
+        if (pill.dataset.wave === (s.waveform || 'default')) {
+            pill.classList.add('active');
+        } else {
+            pill.classList.remove('active');
+        }
+    });
+
+    // Unison Pills
+    const unisonPills = document.querySelectorAll('.fx-unison-pill');
+    unisonPills.forEach(pill => {
+        if (parseInt(pill.dataset.unison, 10) === (s.unison || 1)) {
+            pill.classList.add('active');
+        } else {
+            pill.classList.remove('active');
+        }
+    });
+
+    // Detune Slider
+    const detuneSlider = document.getElementById('fx-detune-slider');
+    const detuneVal = document.getElementById('fx-detune-val');
+    if (detuneSlider) detuneSlider.value = s.detune || 0;
+    if (detuneVal) detuneVal.textContent = `${s.detune || 0} cents`;
+
+    // Sub-Osc Toggle
+    const subOscToggle = document.getElementById('fx-subosc-toggle');
+    if (subOscToggle) subOscToggle.checked = !!s.subOsc;
+
+    // ADSR Sliders
+    const attackSlider = document.getElementById('fx-attack-slider');
+    const attackVal = document.getElementById('fx-attack-val');
+    const attackMs = Math.round((s.attack !== undefined ? s.attack : 0.01) * 1000);
+    if (attackSlider) attackSlider.value = attackMs;
+    if (attackVal) attackVal.textContent = `${attackMs} ms`;
+
+    const decaySlider = document.getElementById('fx-decay-slider');
+    const decayVal = document.getElementById('fx-decay-val');
+    const decayMs = Math.round((s.decay !== undefined ? s.decay : 0.15) * 1000);
+    if (decaySlider) decaySlider.value = decayMs;
+    if (decayVal) decayVal.textContent = `${decayMs} ms`;
+
+    const sustainSlider = document.getElementById('fx-sustain-slider');
+    const sustainVal = document.getElementById('fx-sustain-val');
+    const sustainPct = Math.round((s.sustain !== undefined ? s.sustain : 0.6) * 100);
+    if (sustainSlider) sustainSlider.value = sustainPct;
+    if (sustainVal) sustainVal.textContent = `${sustainPct}%`;
+
+    const releaseSlider = document.getElementById('fx-release-slider');
+    const releaseVal = document.getElementById('fx-release-val');
+    const releaseMs = Math.round((s.release !== undefined ? s.release : 0.2) * 1000);
+    if (releaseSlider) releaseSlider.value = releaseMs;
+    if (releaseVal) releaseVal.textContent = `${releaseMs} ms`;
+
     // Filter Type Pills
     const filterPills = document.querySelectorAll('.fx-filter-pill');
     filterPills.forEach(pill => {
@@ -733,25 +987,30 @@ function updateFxModalControls(trackId) {
     if (resSlider) resSlider.value = s.resonance || 1.0;
     if (resVal) resVal.textContent = (s.resonance || 1.0).toFixed(1);
 
-    // Reverb
-    const revSlider = document.getElementById('fx-reverb-slider');
-    const revVal = document.getElementById('fx-reverb-val');
-    if (revSlider) revSlider.value = Math.round((s.reverb || 0) * 100);
-    if (revVal) revVal.textContent = `${Math.round((s.reverb || 0) * 100)}%`;
+    // LFO Target Select & Depth / Rate
+    const lfoTargetSel = document.getElementById('fx-lfo-target-select');
+    if (lfoTargetSel) lfoTargetSel.value = s.lfoTarget || 'cutoff';
 
-    // Delay
-    const delaySlider = document.getElementById('fx-delay-slider');
-    const delayVal = document.getElementById('fx-delay-val');
-    if (delaySlider) delaySlider.value = Math.round((s.delay || 0) * 100);
-    if (delayVal) delayVal.textContent = `${Math.round((s.delay || 0) * 100)}%`;
+    const lfoDepthSlider = document.getElementById('fx-lfo-depth-slider');
+    const lfoDepthVal = document.getElementById('fx-lfo-depth-val');
+    const lfoDepthPct = Math.round((s.lfoDepth || 0) * 100);
+    if (lfoDepthSlider) lfoDepthSlider.value = lfoDepthPct;
+    if (lfoDepthVal) lfoDepthVal.textContent = `${lfoDepthPct}%`;
 
-    // Delay Time
-    const dtSlider = document.getElementById('fx-delaytime-slider');
-    const dtVal = document.getElementById('fx-delaytime-val');
-    const dtMs = Math.round((s.delayTime || 0.25) * 1000);
-    const fbPct = Math.round((s.delayFeedback || 0.4) * 100);
-    if (dtSlider) dtSlider.value = dtMs;
-    if (dtVal) dtVal.textContent = `${dtMs} ms (${fbPct}% FB)`;
+    const lfoRateSlider = document.getElementById('fx-lfo-rate-slider');
+    const lfoRateVal = document.getElementById('fx-lfo-rate-val');
+    if (lfoRateSlider) lfoRateSlider.value = s.lfoRate || 2.0;
+    if (lfoRateVal) lfoRateVal.textContent = `${(s.lfoRate || 2.0).toFixed(1)} Hz`;
+
+    // Distortion Mode Pills
+    const distPills = document.querySelectorAll('.fx-dist-pill');
+    distPills.forEach(pill => {
+        if (pill.dataset.dist === (s.distMode || 'tube')) {
+            pill.classList.add('active');
+        } else {
+            pill.classList.remove('active');
+        }
+    });
 
     // Drive
     const driveSlider = document.getElementById('fx-drive-slider');
@@ -759,15 +1018,32 @@ function updateFxModalControls(trackId) {
     if (driveSlider) driveSlider.value = Math.round((s.drive || 0) * 100);
     if (driveVal) driveVal.textContent = `${Math.round((s.drive || 0) * 100)}%`;
 
-    // Waveform Pills
-    const wavePills = document.querySelectorAll('.fx-wave-pill');
-    wavePills.forEach(pill => {
-        if (pill.dataset.wave === (s.waveform || 'default')) {
+    // Reverb Mode Pills & Slider
+    const revPills = document.querySelectorAll('.fx-reverb-pill');
+    revPills.forEach(pill => {
+        if (pill.dataset.rev === (s.reverbMode || 'hall')) {
             pill.classList.add('active');
         } else {
             pill.classList.remove('active');
         }
     });
+
+    const revSlider = document.getElementById('fx-reverb-slider');
+    const revVal = document.getElementById('fx-reverb-val');
+    if (revSlider) revSlider.value = Math.round((s.reverb || 0) * 100);
+    if (revVal) revVal.textContent = `${Math.round((s.reverb || 0) * 100)}%`;
+
+    // Delay Sync & Ping-Pong
+    const delaySyncSel = document.getElementById('fx-delaysync-select');
+    if (delaySyncSel) delaySyncSel.value = s.delaySync || '1/8';
+
+    const pingPongToggle = document.getElementById('fx-pingpong-toggle');
+    if (pingPongToggle) pingPongToggle.checked = !!s.delayPingPong;
+
+    const delaySlider = document.getElementById('fx-delay-slider');
+    const delayVal = document.getElementById('fx-delay-val');
+    if (delaySlider) delaySlider.value = Math.round((s.delay || 0) * 100);
+    if (delayVal) delayVal.textContent = `${Math.round((s.delay || 0) * 100)}%`;
 }
 
 /**
@@ -776,6 +1052,7 @@ function updateFxModalControls(trackId) {
 function closeInstrumentFxModal() {
     const modal = document.getElementById('fx-modal');
     if (modal) modal.classList.remove('open');
+    stopOscilloscopeRenderLoop();
     if (typeof initSequencerUI === 'function') {
         initSequencerUI();
     }
@@ -2200,13 +2477,14 @@ function initUI() {
     }
 
     // =========================================================================
-    // MODALE RACK D'EFFETS DSP & RÉGLAGES D'INSTRUMENT (CHANNEL STRIP)
+    // MODALE PRO STUDIO SOUND DESIGN & RACK D'EFFETS DSP
     // =========================================================================
     const fxModal = document.getElementById('fx-modal');
     const closeFxBtn = document.getElementById('close-fx-modal');
     const fxApplyBtn = document.getElementById('fx-apply-btn');
     const fxResetBtn = document.getElementById('fx-reset-btn');
     const fxPreviewBtn = document.getElementById('fx-preview-btn');
+    const fxRandomBtn = document.getElementById('fx-random-btn');
 
     if (closeFxBtn) closeFxBtn.addEventListener('click', closeInstrumentFxModal);
     if (fxApplyBtn) fxApplyBtn.addEventListener('click', closeInstrumentFxModal);
@@ -2220,31 +2498,49 @@ function initUI() {
         });
     }
 
+    if (fxRandomBtn) {
+        fxRandomBtn.addEventListener('click', () => {
+            if (activeFxTrackId && typeof generateRandomTrackSound === 'function') {
+                initAudio();
+                generateRandomTrackSound(activeFxTrackId);
+                updateFxModalControls(activeFxTrackId);
+                renderFxMiniKeyboard(activeFxTrackId);
+                playTrackSound(activeFxTrackId);
+                spawnFloatingText('🎲 Patch Mystère généré !', fxRandomBtn, true);
+            }
+        });
+    }
+
     if (fxResetBtn) {
         fxResetBtn.addEventListener('click', () => {
             if (activeFxTrackId && typeof resetTrackSettings === 'function') {
                 resetTrackSettings(activeFxTrackId);
                 updateFxModalControls(activeFxTrackId);
+                renderFxMiniKeyboard(activeFxTrackId);
                 initAudio();
                 playTrackSound(activeFxTrackId);
+                spawnFloatingText('🔄 Piste réinitialisée', fxResetBtn, false);
             }
         });
     }
 
-    // Sliders de réglages & effets
+    // Sliders de réglages & effets complets
     const fxSliders = [
         { id: 'fx-volume-slider', key: 'volume', transform: v => v / 100, labelId: 'fx-volume-val', format: v => `${v}%` },
         { id: 'fx-pan-slider', key: 'pan', transform: v => v / 100, labelId: 'fx-pan-val', format: v => v < 0 ? `${Math.abs(v)}% G` : v > 0 ? `${v}% D` : 'Centre' },
         { id: 'fx-pitch-slider', key: 'pitch', transform: v => parseInt(v, 10), labelId: 'fx-pitch-val', format: v => `${v > 0 ? '+' : ''}${v} st` },
+        { id: 'fx-detune-slider', key: 'detune', transform: v => parseInt(v, 10), labelId: 'fx-detune-val', format: v => `${v} cents` },
+        { id: 'fx-attack-slider', key: 'attack', transform: v => v / 1000, labelId: 'fx-attack-val', format: v => `${v} ms` },
+        { id: 'fx-decay-slider', key: 'decay', transform: v => v / 1000, labelId: 'fx-decay-val', format: v => `${v} ms` },
+        { id: 'fx-sustain-slider', key: 'sustain', transform: v => v / 100, labelId: 'fx-sustain-val', format: v => `${v}%` },
+        { id: 'fx-release-slider', key: 'release', transform: v => v / 1000, labelId: 'fx-release-val', format: v => `${v} ms` },
         { id: 'fx-cutoff-slider', key: 'cutoff', transform: v => parseInt(v, 10), labelId: 'fx-cutoff-val', format: v => v >= 1000 ? `${(v / 1000).toFixed(1)} kHz` : `${v} Hz` },
         { id: 'fx-resonance-slider', key: 'resonance', transform: v => parseFloat(v), labelId: 'fx-resonance-val', format: v => parseFloat(v).toFixed(1) },
+        { id: 'fx-lfo-depth-slider', key: 'lfoDepth', transform: v => v / 100, labelId: 'fx-lfo-depth-val', format: v => `${v}%` },
+        { id: 'fx-lfo-rate-slider', key: 'lfoRate', transform: v => parseFloat(v), labelId: 'fx-lfo-rate-val', format: v => `${parseFloat(v).toFixed(1)} Hz` },
+        { id: 'fx-drive-slider', key: 'drive', transform: v => v / 100, labelId: 'fx-drive-val', format: v => `${v}%` },
         { id: 'fx-reverb-slider', key: 'reverb', transform: v => v / 100, labelId: 'fx-reverb-val', format: v => `${v}%` },
-        { id: 'fx-delay-slider', key: 'delay', transform: v => v / 100, labelId: 'fx-delay-val', format: v => `${v}%` },
-        { id: 'fx-delaytime-slider', key: 'delayTime', transform: v => v / 1000, labelId: 'fx-delaytime-val', format: (v, slider) => {
-            const s = (activeFxTrackId && typeof getInstrumentTrackSettings === 'function') ? getInstrumentTrackSettings(activeFxTrackId) : {};
-            return `${v} ms (${Math.round((s.delayFeedback || 0.4) * 100)}% FB)`;
-        }},
-        { id: 'fx-drive-slider', key: 'drive', transform: v => v / 100, labelId: 'fx-drive-val', format: v => `${v}%` }
+        { id: 'fx-delay-slider', key: 'delay', transform: v => v / 100, labelId: 'fx-delay-val', format: v => `${v}%` }
     ];
 
     fxSliders.forEach(item => {
@@ -2261,6 +2557,105 @@ function initUI() {
             });
         }
     });
+
+    // Unison Pills
+    const unisonPills = document.querySelectorAll('.fx-unison-pill');
+    unisonPills.forEach(pill => {
+        pill.addEventListener('click', () => {
+            if (!activeFxTrackId) return;
+            unisonPills.forEach(p => p.classList.remove('active'));
+            pill.classList.add('active');
+            const unison = parseInt(pill.dataset.unison, 10);
+            if (typeof updateInstrumentTrackSetting === 'function') {
+                updateInstrumentTrackSetting(activeFxTrackId, 'unison', unison);
+                initAudio();
+                playTrackSound(activeFxTrackId);
+            }
+        });
+    });
+
+    // Sub-Osc Toggle
+    const subOscToggle = document.getElementById('fx-subosc-toggle');
+    if (subOscToggle) {
+        subOscToggle.addEventListener('change', (e) => {
+            if (!activeFxTrackId) return;
+            if (typeof updateInstrumentTrackSetting === 'function') {
+                updateInstrumentTrackSetting(activeFxTrackId, 'subOsc', e.target.checked);
+                initAudio();
+                playTrackSound(activeFxTrackId);
+            }
+        });
+    }
+
+    // LFO Target Select
+    const lfoTargetSel = document.getElementById('fx-lfo-target-select');
+    if (lfoTargetSel) {
+        lfoTargetSel.addEventListener('change', (e) => {
+            if (!activeFxTrackId) return;
+            if (typeof updateInstrumentTrackSetting === 'function') {
+                updateInstrumentTrackSetting(activeFxTrackId, 'lfoTarget', e.target.value);
+                initAudio();
+                playTrackSound(activeFxTrackId);
+            }
+        });
+    }
+
+    // Distortion Mode Pills
+    const distPills = document.querySelectorAll('.fx-dist-pill');
+    distPills.forEach(pill => {
+        pill.addEventListener('click', () => {
+            if (!activeFxTrackId) return;
+            distPills.forEach(p => p.classList.remove('active'));
+            pill.classList.add('active');
+            const dist = pill.dataset.dist;
+            if (typeof updateInstrumentTrackSetting === 'function') {
+                updateInstrumentTrackSetting(activeFxTrackId, 'distMode', dist);
+                initAudio();
+                playTrackSound(activeFxTrackId);
+            }
+        });
+    });
+
+    // Reverb Mode Pills
+    const revPills = document.querySelectorAll('.fx-reverb-pill');
+    revPills.forEach(pill => {
+        pill.addEventListener('click', () => {
+            if (!activeFxTrackId) return;
+            revPills.forEach(p => p.classList.remove('active'));
+            pill.classList.add('active');
+            const rev = pill.dataset.rev;
+            if (typeof updateInstrumentTrackSetting === 'function') {
+                updateInstrumentTrackSetting(activeFxTrackId, 'reverbMode', rev);
+                initAudio();
+                playTrackSound(activeFxTrackId);
+            }
+        });
+    });
+
+    // Delay Sync Select & Ping-Pong Toggle
+    const delaySyncSel = document.getElementById('fx-delaysync-select');
+    if (delaySyncSel) {
+        delaySyncSel.addEventListener('change', (e) => {
+            if (!activeFxTrackId) return;
+            if (typeof updateInstrumentTrackSetting === 'function') {
+                updateInstrumentTrackSetting(activeFxTrackId, 'delaySync', e.target.value);
+                initAudio();
+                playTrackSound(activeFxTrackId);
+            }
+        });
+    }
+
+    const pingPongToggle = document.getElementById('fx-pingpong-toggle');
+    if (pingPongToggle) {
+        pingPongToggle.addEventListener('change', (e) => {
+            if (!activeFxTrackId) return;
+            if (typeof updateInstrumentTrackSetting === 'function') {
+                updateInstrumentTrackSetting(activeFxTrackId, 'delayPingPong', e.target.checked);
+                initAudio();
+                playTrackSound(activeFxTrackId);
+            }
+        });
+    }
 
     // Filtre Type Pills
     const filterPills = document.querySelectorAll('.fx-filter-pill');
@@ -2303,8 +2698,10 @@ function initUI() {
             if (typeof applyTrackFxPreset === 'function') {
                 applyTrackFxPreset(activeFxTrackId, presetKey);
                 updateFxModalControls(activeFxTrackId);
+                renderFxMiniKeyboard(activeFxTrackId);
                 initAudio();
                 playTrackSound(activeFxTrackId);
+                spawnFloatingText(`✨ Preset : ${tag.textContent}`, tag, false);
             }
         });
     });
@@ -2331,6 +2728,43 @@ function initUI() {
             }
         });
     }
+
+    // Clavier physique pour jouer des notes en direct dans la modale
+    window.addEventListener('keydown', (e) => {
+        const modal = document.getElementById('fx-modal');
+        if (!modal || !modal.classList.contains('open') || !activeFxTrackId) return;
+
+        // Ignorer si on tape dans un champ texte
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+        const KEY_NOTE_MAP = {
+            'a': 'C3', 'w': 'C#3', 's': 'D3', 'e': 'D#3', 'd': 'E3',
+            'f': 'F3', 't': 'F#3', 'g': 'G3', 'y': 'G#3', 'h': 'A3',
+            'u': 'A#3', 'j': 'B3', 'k': 'C4'
+        };
+
+        const keyLower = e.key.toLowerCase();
+        if (KEY_NOTE_MAP[keyLower]) {
+            const note = KEY_NOTE_MAP[keyLower];
+            initAudio();
+            playTrackSound(activeFxTrackId, note);
+
+            // Retour visuel sur la touche du clavier
+            const keyEl = modal.querySelector(`.fx-piano-key[data-shortcut="${e.key.toUpperCase()}"]`);
+            if (keyEl) {
+                keyEl.classList.add('pressed');
+                setTimeout(() => keyEl.classList.remove('pressed'), 140);
+            }
+        } else if (['1', '2', '3', '4', '5', '6', '7', '8'].includes(e.key)) {
+            initAudio();
+            if (activeFxTrackId === 'kick') {
+                const pitches = [105, 120, 140, 160, 180, 210, 245, 280];
+                playKickSound(pitches[parseInt(e.key, 10) - 1]);
+            } else {
+                playTrackSound(activeFxTrackId);
+            }
+        }
+    });
 
     // =========================================================================
     // SECTION OPTIONS DU STUDIO
