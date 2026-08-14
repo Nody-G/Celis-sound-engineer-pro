@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Célis Sound Engineer PRO - Studio de Production Musicale Pro</title>
+    <!-- Google Fonts pour une typographie moderne & percutante -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Outfit:wght@400;600;700;900&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/jpeg" href="assets/studio_logo.jpg">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <div id="game-container">
+        <!-- En-tête Cockpit & VU-Mètres Stéréo -->
+        <header id="header">
+            <div class="header-top">
+                <div class="brand">
+                    <img src="assets/studio_logo.jpg" alt="Logo Célis Sound Engineer PRO" class="brand-logo-img">
+                    <div class="brand-info">
+                        <h1>CÉLIS SOUND ENGINEER <span>PRO</span></h1>
+                        <div class="studio-status-indicator">
+                            <span class="live-dot"></span> LIVE STUDIO SESSION
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VU-Mètres Stéréo L/R -->
+                <div class="vu-meters-cluster">
+                    <div class="vu-channel">
+                        <span class="vu-label">L</span>
+                        <div class="vu-meter-bar"><div id="vu-meter-left-fill" class="vu-fill"></div></div>
+                    </div>
+                    <div class="vu-channel">
+                        <span class="vu-label">R</span>
+                        <div class="vu-meter-bar"><div id="vu-meter-right-fill" class="vu-fill"></div></div>
+                    </div>
+                </div>
+
+                <!-- Contrôles audio & thème -->
+                <div id="controls-bar">
+                    <button id="help-btn" class="control-button" title="Ouvrir le Manuel d'Aide du Producteur (Touche H)">❓ Aide</button>
+                    <button id="options-btn" class="control-button" title="Ouvrir les Options et Paramètres du Studio (Touche O)">⚙️ Options</button>
+                    <button id="secret-terminal-btn" class="control-button terminal" title="Ouvrir le Terminal de Codes Secrets">💻 Codes</button>
+                    <button id="export-import-btn" class="control-button backup" title="Exporter ou Importer votre Sauvegarde">💾 Sync</button>
+                    <button id="sound-toggle" class="control-button icon-only" title="Activer / Désactiver les effets sonores (Touche M)">🔊</button>
+                    <button id="music-toggle" class="control-button icon-only" title="Activer / Désactiver la musique procédurale">🎵</button>
+                    <button id="theme-toggle" class="control-button icon-only" title="Changer le thème visuel">🌙</button>
+                </div>
+            </div>
+
+            <!-- Évolution Visuelle du Studio & Décor Dynamique -->
+            <div id="studio-evolution-banner" class="studio-evolution-banner stage-1">
+                <div class="studio-badge-row">
+                    <div class="studio-tier-badge" id="studio-tier-badge">🏠 STADE 1 : HOME STUDIO EN SOUS-SOL</div>
+                    <div class="studio-tier-perk" id="studio-tier-perk">Production passive modeste • Début de l'aventure</div>
+                </div>
+                <!-- Visualiseur de Rack d'Effets Analogiques Rétro-éclairés -->
+                <div id="analog-gear-rack" class="analog-gear-rack"></div>
+            </div>
+        </header>
+
+        <!-- Barre des Ressources Principales (Sticky HUD permanent sur tout le scroll) -->
+        <div id="resources-bar">
+            <div class="resource-card" id="money-display">
+                <div class="resource-icon-wrap money">💰</div>
+                <div class="resource-details">
+                    <span class="resource-label">Trésorerie Studio</span>
+                    <span class="resource-value" id="money-value">0 $</span>
+                </div>
+            </div>
+
+            <div class="resource-card" id="fame-display">
+                <div class="resource-icon-wrap fame">⭐</div>
+                <div class="resource-details">
+                    <span class="resource-label">Renommée Mondiale</span>
+                    <span class="resource-value" id="fame-value">0 ⭐</span>
+                </div>
+            </div>
+
+            <div class="resource-card" id="energy-display">
+                <div class="resource-icon-wrap energy">⚡</div>
+                <div class="resource-details">
+                    <div class="energy-label-row">
+                        <span class="resource-label">Énergie Producteur</span>
+                        <span class="energy-numeric" id="energy-value">100 / 100 ⚡</span>
+                    </div>
+                    <div class="energy-bar-bg">
+                        <div id="energy-bar-fill" class="energy-bar-fill"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="resource-card" id="cassettes-display">
+                <div class="resource-icon-wrap cassette">📼</div>
+                <div class="resource-details">
+                    <span class="resource-label">Cassettes Dorées</span>
+                    <span class="resource-value" id="cassettes-value">0 📼</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Zone Studio Interactif Central -->
+        <main id="main-content">
+            <section id="studio-cockpit" class="panel studio-panel">
+                <div class="studio-cockpit-layout">
+                    <!-- Platine Vinyle, Mix & Beat Pads MPC -->
+                    <div class="turntable-wrapper">
+                        <div id="studio-turntable" class="turntable" title="Cliquez ou mixez pour scratcher et monter la hype ! (Espace)">
+                            <div class="vinyl-disc"></div>
+                            <div class="tonearm"></div>
+                        </div>
+
+                        <button id="mix-button" class="mix-button">
+                            <span class="mix-icon">🎧</span>
+                            <span class="mix-text">
+                                <strong>MIXER LE MORCEAU</strong>
+                                <small>Coût : 10 ⚡ • Chance critique x3 (Espace)</small>
+                            </span>
+                        </button>
+
+                        <!-- Beat Pads MPC Interactifs & Clavier 8 Notes -->
+                        <div class="mpc-pads-rack">
+                            <div class="mpc-header">
+                                <div class="mpc-title-group">
+                                    <span class="mpc-title">🎛️ BEAT PADS (1-8)</span>
+                                </div>
+                                <div class="mpc-controls-bar">
+                                    <select id="mpc-mode-select" class="mpc-select" title="Choisir le mode ou l'instrument à jouer">
+                                        <option value="drumkit">🥁 Multi Drum Kit</option>
+                                        <optgroup label="── Instruments Mélodiques ──">
+                                            <option value="synth">🎹 Synth Lead 80s</option>
+                                            <option value="bass">🎸 Sub-Bass 808</option>
+                                            <option value="pad">🌌 Nappe Chord Pad</option>
+                                            <option value="piano">🎹 Piano de Concert</option>
+                                            <option value="pluck">🔔 Crystal Pluck</option>
+                                            <option value="acid">⚡ Acid 303 Lead</option>
+                                            <option value="strings">🎻 Cordes Symphoniques</option>
+                                            <option value="brass">🎷 Brass Synth Funky</option>
+                                            <option value="cosmic">🛰️ Cosmic Orbit</option>
+                                        </optgroup>
+                                    </select>
+                                    <select id="mpc-scale-select" class="mpc-select scale-select" title="Sélectionner une gamme musicale" style="display: none;">
+                                        <option value="synthwave">🌆 Synthwave</option>
+                                        <option value="french_touch">🥖 French Touch</option>
+                                        <option value="trap">🔥 Dark Trap</option>
+                                        <option value="lofi">☕ Lo-Fi</option>
+                                        <option value="japanese">🌸 Japonaise</option>
+                                        <option value="major">☀️ Majeure Pop</option>
+                                        <option value="custom">⚙️ Custom</option>
+                                    </select>
+                                    <div class="mpc-actions-group" id="mpc-melodic-actions" style="display: none;">
+                                        <button id="mpc-tune-btn" class="mpc-tool-btn" title="Accorder les touches note par note">⚙️</button>
+                                        <button id="mpc-trans-down" class="mpc-tool-btn" title="Transposer -1 demi-ton">-♭</button>
+                                        <button id="mpc-trans-up" class="mpc-tool-btn" title="Transposer +1 demi-ton">+♯</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mpc-pads-grid" id="mpc-pads-grid">
+                                <!-- Rendu dynamique 4x2 dans ui.js -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Visualiseur Spectral, Hype & Séquenceur 16-Pas -->
+                    <div class="visualizer-and-hype-col">
+                        <!-- Canvas Visualizer -->
+                        <div class="visualizer-container">
+                            <div class="visualizer-header">
+                                <span class="vis-title">SPECTRE AUDIO (60 FPS)</span>
+                                <div class="vis-mode-selector">
+                                    <button class="vis-mode-btn active" data-mode="bars" title="Barres Néon DSP">📊 Barres</button>
+                                    <button class="vis-mode-btn" data-mode="wave" title="Oscilloscope Analogique">〰️ Onde</button>
+                                    <button class="vis-mode-btn" data-mode="radial" title="Cercle Spectral Radial">⭕ Radial</button>
+                                </div>
+                                <span class="dsp-tag">DSP 24-BIT</span>
+                            </div>
+                            <canvas id="audio-visualizer" height="90"></canvas>
+                        </div>
+
+                        <!-- Jauge de Hype & Mode Frenzy -->
+                        <div class="hype-module">
+                            <div class="hype-header">
+                                <span class="hype-title">🔥 JAUGE DE HYPE DU PUBLIC</span>
+                                <span id="hype-combo-value" class="hype-combo-badge">Combo x1.0</span>
+                            </div>
+                            <div class="hype-bar-bg">
+                                <div id="hype-bar-fill" class="hype-bar-fill"></div>
+                            </div>
+                            <div id="hype-status-text" class="hype-status-text">
+                                🎧 Mixez ou tapez sur les pads pour déclencher le mode FRENZY (x10) !
+                            </div>
+                        </div>
+
+                        <!-- Mini-DAW : Séquenceur 16-Pas Interactif (13 Instruments) -->
+                        <div class="sequencer-cockpit-box">
+                            <div class="seq-header-bar">
+                                <div class="seq-title-wrap">
+                                    <span>🎹 SÉQUENCEUR 16-PAS (GROOVE ENGINE)</span>
+                                    <span class="seq-groove-badge" id="seq-groove-badge">Bonus Groove: +0%</span>
+                                </div>
+                                <div class="seq-controls-row">
+                                    <div class="seq-bpm-box">
+                                        <span id="seq-bpm-value" class="seq-bpm-value">124 BPM</span>
+                                        <input type="range" id="seq-bpm-slider" min="60" max="200" value="124" class="bpm-range-slider" title="Ajuster le tempo (60-200 BPM)">
+                                    </div>
+                                    <select id="seq-preset-select" class="seq-select" title="Charger un preset de style">
+                                        <option value="house">🥖 French Touch (124 BPM)</option>
+                                        <option value="synthwave">🌆 Synthwave (118 BPM)</option>
+                                        <option value="trap">🔥 Dark Trap (140 BPM)</option>
+                                        <option value="cyberpunk">🤖 Cyberpunk (132 BPM)</option>
+                                        <option value="lofi">☕ Lo-Fi Chill (85 BPM)</option>
+                                    </select>
+                                    <button id="seq-play-btn" class="seq-action-btn play">▶ JOUER</button>
+                                    <button id="seq-clear-btn" class="seq-action-btn clear" title="Effacer la grille">🗑️</button>
+                                </div>
+                            </div>
+
+                            <!-- Grille 16-Pas Dynamique (13 Instruments Déblocables) -->
+                            <div class="sequencer-matrix" id="sequencer-matrix"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Résumé de production en temps réel -->
+                <div id="production-info-bar">
+                    <div class="prod-stat">
+                        <span class="stat-label">Production Passive :</span>
+                        <strong id="passive-production" class="stat-val green">0 $/s</strong>
+                    </div>
+                    <div class="prod-stat">
+                        <span class="stat-label">Morceaux Mixés :</span>
+                        <strong id="tracks-mixed" class="stat-val cyan">0</strong>
+                    </div>
+                    <div class="prod-stat">
+                        <span class="stat-label">Boosters Actifs :</span>
+                        <div id="active-boosters" class="stat-val gold">Aucun</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Navigation par Onglets Principaux -->
+            <nav id="tabs">
+                <button class="tab-button active" data-tab="equipment">🎚️ Équipement</button>
+                <button class="tab-button" data-tab="upgrades">🔬 R&D Studio</button>
+                <button class="tab-button" data-tab="discography">💿 Discographie</button>
+                <button class="tab-button highlight" data-tab="artists">🎤 Label & Artistes</button>
+                <button class="tab-button highlight" data-tab="billboard">📈 Billboard Top 50</button>
+                <button class="tab-button gold" data-tab="trophies">🏆 Trophées & Plaquettes</button>
+                <button class="tab-button" data-tab="quests">🎯 Quêtes & Boutique 📼</button>
+                <button class="tab-button" data-tab="mastering">🎛️ Mastering Lab</button>
+                <button class="tab-button" data-tab="boosters">⚡ Boosters</button>
+                <button class="tab-button" data-tab="contracts">📋 Contrats</button>
+                <button class="tab-button" data-tab="achievements">🏅 Succès</button>
+                <button class="tab-button" data-tab="stats">📊 Statistiques</button>
+                <button class="tab-button prestige" data-tab="prestige">👑 Prestige</button>
+            </nav>
+
+            <!-- Onglet Équipement -->
+            <section id="equipment-tab" class="tab-content active">
+                <div class="tab-header-flex">
+                    <div>
+                        <h2>🎚️ Équipement Professionnel du Studio</h2>
+                        <p class="tab-subtitle">Investissez dans du matériel de pointe pour automatiser vos gains.</p>
+                    </div>
+
+                    <!-- Sélecteur d'Achat en Masse -->
+                    <div class="buy-multipliers-bar">
+                        <span class="mult-label">Achat :</span>
+                        <button class="buy-multiplier-btn active" data-multiplier="1">x1</button>
+                        <button class="buy-multiplier-btn" data-multiplier="10">x10</button>
+                        <button class="buy-multiplier-btn" data-multiplier="25">x25</button>
+                        <button class="buy-multiplier-btn" data-multiplier="100">x100</button>
+                        <button class="buy-multiplier-btn" data-multiplier="max">MAX</button>
+                    </div>
+                </div>
+
+                <div id="equipment-list" class="equipment-grid"></div>
+            </section>
+
+            <!-- Onglet R&D / Talents -->
+            <section id="upgrades-tab" class="tab-content">
+                <h2>🔬 Recherche & Développement Acoustique</h2>
+                <p class="tab-subtitle">Débloquez des technologies brevetées pour démultiplier vos capacités de production.</p>
+                <div id="upgrades-list" class="upgrades-grid"></div>
+            </section>
+
+            <!-- Onglet Discographie & Albums -->
+            <section id="discography-tab" class="tab-content">
+                <h2>💿 Discographie & Sorties d'Albums</h2>
+                <p class="tab-subtitle">Enregistrez des hits, lancez-les dans les charts mondiaux et percevez des royalties de streaming !</p>
+
+                <!-- Formulaire de sortie -->
+                <div class="album-creator-card">
+                    <div class="creator-header">
+                        <h3>🎙️ Nouveau Projet Musical</h3>
+                        <div class="total-royalties-pill">
+                            Total Royalties Actives : <strong id="total-royalties-display">+0 $/s</strong>
+                        </div>
+                    </div>
+
+                    <div class="creator-form-grid">
+                        <div class="form-group album-title-group">
+                            <label for="custom-album-title-input">Titre du morceau / album :</label>
+                            <div class="album-title-input-wrap">
+                                <input type="text" id="custom-album-title-input" class="studio-input" placeholder="Titre personnalisé ou généré..." maxlength="45">
+                                <button id="random-album-title-btn" class="random-dice-btn" type="button" title="Générer un titre stylé selon le genre">🎲</button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="album-format-select">Format de sortie :</label>
+                            <select id="album-format-select" class="studio-select">
+                                <option value="single">🎵 Single Hit (1 Titre) - 500 $ • 30 ⚡</option>
+                                <option value="ep">💿 EP Studio (4 Titres) - 10 000 $ • 60 ⚡</option>
+                                <option value="album">🎼 Album Complet (12 Titres) - 250 000 $ • 90 ⚡</option>
+                                <option value="world_tour_record">👑 Album Live Tournée - 10M $ • 100 ⚡</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="album-genre-select">Genre musical :</label>
+                            <select id="album-genre-select" class="studio-select">
+                                <option value="synthwave">🌆 Synthwave 80s (Bonus Royalties x1.2)</option>
+                                <option value="french_house">🥖 French Touch (Bonus Royalties x1.35)</option>
+                                <option value="lofi">☕ Lo-Fi Hip-Hop (Bonus Royalties x1.0)</option>
+                                <option value="trap">🔥 Trap / Hip-Hop (Bonus Royalties x1.4)</option>
+                                <option value="cyberpunk">🤖 Cyberpunk Techno (Bonus Royalties x1.5)</option>
+                                <option value="future_bass">🌌 Future Bass EDM (Bonus Royalties x1.6)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button id="release-album-btn" class="release-btn">
+                        🚀 ENREGISTRER & DISTRIBUER SUR LES PLATEFORMES
+                    </button>
+                </div>
+
+                <h3 class="section-title">🏆 Vos Sorties Récentes & Plaquettes</h3>
+                <div id="albums-history-list" class="albums-history-list"></div>
+            </section>
+
+            <!-- Onglet Label & Artistes -->
+            <section id="artists-tab" class="tab-content">
+                <div class="section-hero-illustration">
+                    <img src="assets/artists/artists_banner.svg" alt="Label & Artistes Banner" class="tab-hero-banner-img">
+                </div>
+                <div class="tab-header-flex">
+                    <div>
+                        <h2>🎤 Label Musical & Écurie d'Artistes</h2>
+                        <p class="tab-subtitle">Signez des talents uniques, entraînez-les et envoyez-les en tournée pour des revenus massifs.</p>
+                    </div>
+                    <div class="artists-roster-status" id="artists-roster-status">0 / 4 Artistes Signés</div>
+                </div>
+
+                <h3 class="section-title">⭐ Vos Artistes Sous Contrat</h3>
+                <div id="signed-artists-grid" class="artists-grid"></div>
+
+                <h3 class="section-title">🔍 Talents à Recruter</h3>
+                <div id="available-artists-grid" class="artists-grid"></div>
+            </section>
+
+            <!-- Onglet Billboard Top 50 -->
+            <section id="billboard-tab" class="tab-content">
+                <div class="tab-header-flex">
+                    <div>
+                        <h2>📈 Hit-Parade Mondial du Billboard Top 20</h2>
+                        <p class="tab-subtitle">Vos singles rivalisent avec les plus grands hits de la planète. Grimpez jusqu'à la 1ère place !</p>
+                    </div>
+                    <div class="peak-rank-badge" id="peak-rank-badge">🏆 Meilleur Rang : #50</div>
+                </div>
+                <div id="billboard-chart-container" class="billboard-chart-container"></div>
+            </section>
+
+            <!-- Onglet Trophées & Disques d'Or -->
+            <section id="trophies-tab" class="tab-content">
+                <div class="section-hero-illustration">
+                    <img src="assets/trophies/trophies_banner.svg" alt="Trophées & Disques d'Or Banner" class="tab-hero-banner-img">
+                </div>
+                <h2>🏆 Vitrine des Trophées & Disques de Certification</h2>
+                <p class="tab-subtitle">Les récompenses majeures de votre carrière confèrent des multiplicateurs permanents à votre studio.</p>
+                <div id="trophies-grid" class="trophies-grid"></div>
+            </section>
+
+            <!-- Onglet Quêtes & Boutique de Cassettes -->
+            <section id="quests-tab" class="tab-content">
+                <div class="quests-hero-banner">
+                    <img src="assets/golden_cassette.jpg" alt="Cassette Dorée Master" class="quests-banner-img">
+                    <div class="quests-banner-text">
+                        <h2>🎯 Quêtes Quotidiennes & Boutique de Cassettes Dorées</h2>
+                        <p class="tab-subtitle">Accomplissez des défis pour remporter des Cassettes Dorées 📼 de collection et débloquer des avantages permanents exclusifs pour votre studio.</p>
+                    </div>
+                </div>
+
+                <h3 class="section-title">📋 Défis & Objectifs du Jour</h3>
+                <div id="daily-quests-list" class="daily-quests-list"></div>
+
+                <h3 class="section-title">📼 Boutique d'Avantages de Studio (Cassettes Dorées)</h3>
+                <div id="cassette-perks-grid" class="cassette-perks-grid"></div>
+            </section>
+
+            <!-- Onglet Mastering Lab (Mini-Jeu) -->
+            <section id="mastering-tab" class="tab-content">
+                <div class="section-hero-illustration">
+                    <img src="assets/mastering_banner.svg" alt="Mastering Lab Banner" class="tab-hero-banner-img">
+                </div>
+                <h2>🎛️ Mastering Lab & Calibrage Fréquentiel</h2>
+                <p class="tab-subtitle">Ajustez les curseurs d'égalisation analogique pour trouver le sweet spot et décrocher jusqu'à <strong>x2.5 de Production</strong> !</p>
+
+                <div class="mastering-console-card">
+                    <div id="mastering-bonus-status" class="mastering-status-bar">
+                        <span class="mastering-idle-badge">Réglez l'égaliseur et lancez le test pour calibrer le studio.</span>
+                    </div>
+
+                    <div class="eq-sliders-container">
+                        <div class="eq-channel">
+                            <span class="eq-band-name">BASSES (80 Hz)</span>
+                            <input type="range" id="eq-slider-low" min="0" max="100" value="50" class="analog-slider">
+                            <span id="eq-val-low" class="eq-val-display">50</span>
+                        </div>
+
+                        <div class="eq-channel">
+                            <span class="eq-band-name">MÉDIUMS (1 kHz)</span>
+                            <input type="range" id="eq-slider-mid" min="0" max="100" value="50" class="analog-slider">
+                            <span id="eq-val-mid" class="eq-val-display">50</span>
+                        </div>
+
+                        <div class="eq-channel">
+                            <span class="eq-band-name">AIGUS (12 kHz)</span>
+                            <input type="range" id="eq-slider-high" min="0" max="100" value="50" class="analog-slider">
+                            <span id="eq-val-high" class="eq-val-display">50</span>
+                        </div>
+                    </div>
+
+                    <button id="test-eq-btn" class="test-eq-btn">
+                        🎚️ TESTER LE MASTERING & APPLIQUER LE BOOST
+                    </button>
+                </div>
+            </section>
+
+            <!-- Onglet Boosters -->
+            <section id="boosters-tab" class="tab-content">
+                <h2>⚡ Boosters Temporaires</h2>
+                <p class="tab-subtitle">Activez des stimulants de studio pour accélérer drastiquement votre production.</p>
+                <div id="boosters-list" class="boosters-grid"></div>
+            </section>
+
+            <!-- Onglet Contrats -->
+            <section id="contracts-tab" class="tab-content">
+                <h2>📋 Contrats & Commandes d'Artistes</h2>
+                <p class="tab-subtitle">Répondez aux demandes des labels et stars pour empocher de grosses primes.</p>
+                <div id="contracts-list" class="contracts-grid"></div>
+            </section>
+
+            <!-- Onglet Succès -->
+            <section id="achievements-tab" class="tab-content">
+                <h2>🏅 Succès & Trophées</h2>
+                <div id="achievements-progress"></div>
+                <div id="achievements-list" class="achievements-grid"></div>
+            </section>
+
+            <!-- Onglet Statistiques -->
+            <section id="stats-tab" class="tab-content">
+                <h2>📊 Tableau de Bord & Statistiques</h2>
+                <div id="stats-content"></div>
+                <div id="charts-container" class="charts-grid">
+                    <div class="chart-box">
+                        <h3>📈 Évolution de la Production ($/s)</h3>
+                        <div id="production-chart"></div>
+                    </div>
+                    <div class="chart-box">
+                        <h3>⭐ Évolution de la Renommée</h3>
+                        <div id="fame-chart"></div>
+                    </div>
+                </div>
+                <div id="progress-container">
+                    <h3>🏆 Progression Globale du Jeu</h3>
+                    <div id="overall-progress"></div>
+                </div>
+            </section>
+
+            <!-- Onglet Prestige 2.0 -->
+            <section id="prestige-tab" class="tab-content">
+                <div id="prestige-content"></div>
+            </section>
+        </main>
+
+        <!-- Pied de page -->
+        <footer id="footer">
+            <div class="footer-actions">
+                <button id="footer-help-btn" class="footer-button">❓ Guide & Aide</button>
+                <button id="footer-options-btn" class="footer-button">⚙️ Options</button>
+                <button id="save-button" class="footer-button save">💾 Sauvegarder</button>
+                <button id="reset-button" class="footer-button reset">🔄 Réinitialiser</button>
+            </div>
+            <span id="save-status" class="save-status-text">Sauvegarde automatique active (toutes les 20s)</span>
+        </footer>
+    </div>
+
+    <!-- Modale 1 : SECTION OPTIONS DU STUDIO -->
+    <div id="options-modal" class="studio-modal">
+        <div class="modal-content options-popup">
+            <div class="modal-header">
+                <h3>⚙️ Options & Paramètres du Studio</h3>
+                <button class="modal-close-btn" id="close-options-btn">✖</button>
+            </div>
+            <div class="modal-body options-modal-body">
+                <!-- 1. Mixeur Audio 4 Canaux -->
+                <div class="options-section">
+                    <h4 class="opt-section-title">🔊 Mixeur Audio Multicanal</h4>
+                    <div class="opt-channel-grid">
+                        <div class="opt-slider-row">
+                            <span class="opt-label">Volume Général (Master)</span>
+                            <div class="opt-control-wrap">
+                                <input type="range" id="opt-vol-master" min="0" max="100" value="80" class="studio-opt-slider">
+                                <span id="opt-val-master" class="opt-val-badge">80%</span>
+                            </div>
+                        </div>
+                        <div class="opt-slider-row">
+                            <span class="opt-label">Effets Sonores (SFX)</span>
+                            <div class="opt-control-wrap">
+                                <input type="range" id="opt-vol-sfx" min="0" max="100" value="80" class="studio-opt-slider">
+                                <span id="opt-val-sfx" class="opt-val-badge">80%</span>
+                            </div>
+                        </div>
+                        <div class="opt-slider-row">
+                            <span class="opt-label">Musique d'Ambiance</span>
+                            <div class="opt-control-wrap">
+                                <input type="range" id="opt-vol-music" min="0" max="100" value="50" class="studio-opt-slider">
+                                <span id="opt-val-music" class="opt-val-badge">50%</span>
+                            </div>
+                        </div>
+                        <div class="opt-slider-row">
+                            <span class="opt-label">Séquenceur 16-Pas (Beat)</span>
+                            <div class="opt-control-wrap">
+                                <input type="range" id="opt-vol-seq" min="0" max="100" value="70" class="studio-opt-slider">
+                                <span id="opt-val-seq" class="opt-val-badge">70%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Format de Notation des Nombres -->
+                <div class="options-section">
+                    <h4 class="opt-section-title">🔢 Format d'Affichage des Nombres</h4>
+                    <div class="opt-segmented-group" id="opt-notation-selector">
+                        <button class="opt-segment-btn active" data-notation="standard">
+                            <strong>Standard</strong>
+                            <small>1.25 M • 45.8 B</small>
+                        </button>
+                        <button class="opt-segment-btn" data-notation="scientific">
+                            <strong>Scientifique</strong>
+                            <small>1.25e+06</small>
+                        </button>
+                        <button class="opt-segment-btn" data-notation="engineering">
+                            <strong>Ingénieur</strong>
+                            <small>1.25e6 • 45.8e9</small>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 3. Graphismes & Effets Visuels -->
+                <div class="options-section">
+                    <h4 class="opt-section-title">✨ Effets Visuels & Performances</h4>
+                    <div class="opt-switches-grid">
+                        <label class="opt-toggle-row">
+                            <span>Particules de Clic & Gains</span>
+                            <input type="checkbox" id="opt-toggle-particles" class="studio-switch" checked>
+                        </label>
+                        <label class="opt-toggle-row">
+                            <span>Secousse d'Écran Platine</span>
+                            <input type="checkbox" id="opt-toggle-shake" class="studio-switch" checked>
+                        </label>
+                        <label class="opt-toggle-row">
+                            <span>Mode Économie d'Énergie</span>
+                            <input type="checkbox" id="opt-toggle-powersave" class="studio-switch">
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 4. Sauvegarde & Données -->
+                <div class="options-section">
+                    <h4 class="opt-section-title">💾 Données & Sauvegarde</h4>
+                    <div class="opt-save-row">
+                        <div class="form-group">
+                            <label for="opt-autosave-select">Fréquence d'Auto-Sauvegarde :</label>
+                            <select id="opt-autosave-select" class="studio-select">
+                                <option value="10">Toutes les 10 secondes</option>
+                                <option value="20" selected>Toutes les 20 secondes (Recommandé)</option>
+                                <option value="60">Toutes les 60 secondes</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="opt-buttons-row">
+                        <button id="opt-open-sync-btn" class="save-action-btn">🔄 Ouvrir Import / Export de Clé</button>
+                        <button id="opt-hard-reset-btn" class="footer-button reset full-width">⚠️ Réinitialisation Totale de la Partie</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modale 2 : SECTION GUIDE & AIDE DU PRODUCTEUR -->
+    <div id="help-modal" class="studio-modal">
+        <div class="modal-content help-popup">
+            <div class="modal-header">
+                <h3>📖 Manuel & Guide Officiel du Producteur</h3>
+                <button class="modal-close-btn" id="close-help-btn">✖</button>
+            </div>
+            <div class="modal-body help-modal-layout">
+                <!-- Navigation latérale des chapitres d'aide -->
+                <nav class="help-sidebar-nav" id="help-sidebar-nav">
+                    <button class="help-nav-btn active" data-chapter="basics">🎛️ 1. Fondations & Mix</button>
+                    <button class="help-nav-btn" data-chapter="equipment">🎚️ 2. Équipements & R&D</button>
+                    <button class="help-nav-btn" data-chapter="sequencer">🎹 3. Séquenceur 16-Pas</button>
+                    <button class="help-nav-btn" data-chapter="label">🎤 4. Label & Artistes</button>
+                    <button class="help-nav-btn" data-chapter="albums">💿 5. Discographie & Billboard</button>
+                    <button class="help-nav-btn" data-chapter="mastering">🎛️ 6. Mastering Lab</button>
+                    <button class="help-nav-btn" data-chapter="prestige">👑 7. Refonte & Prestige</button>
+                    <button class="help-nav-btn highlight" data-chapter="shortcuts">⌨️ 8. Raccourcis Clavier</button>
+                </nav>
+
+                <!-- Contenu des chapitres d'aide -->
+                <div class="help-content-area" id="help-content-area">
+                    <!-- Chapitre 1 -->
+                    <div class="help-chapter active" id="help-chapter-basics">
+                        <h4>🎛️ Chapitre 1 : Les Fondations du Studio</h4>
+                        <p>Bienvenue dans votre studio ! Votre objectif est de bâtir un empire musical mondial à partir d'un simple home-studio en sous-sol.</p>
+                        
+                        <div class="help-grid-cards">
+                            <div class="help-mini-card">
+                                <h5>💰 Trésorerie ($)</h5>
+                                <p>Générée par vos mixages manuels, vos machines automatiques, vos albums et vos artistes. Sert à acheter du matériel et signer des contrats.</p>
+                            </div>
+                            <div class="help-mini-card">
+                                <h5>⭐ Renommée Mondiale</h5>
+                                <p>Mesure votre réputation. Débloque de nouveaux formats d'albums, des artistes prestigieux et détermine les points gagnés en Prestige.</p>
+                            </div>
+                            <div class="help-mini-card">
+                                <h5>⚡ Énergie Producteur</h5>
+                                <p>Ressource consommée par le mixage manuel (10 ⚡), le mastering et la sortie d'albums. Se régénère automatiquement en continu.</p>
+                            </div>
+                            <div class="help-mini-card">
+                                <h5>📼 Cassettes Dorées</h5>
+                                <p>Devise rare obtenue via les quêtes quotidiennes, tournées et codes secrets. Débloque des perks permanents comme l'Auto-Mixer IA.</p>
+                            </div>
+                        </div>
+
+                        <h5>🔥 Hype & Mode FRENZY</h5>
+                        <p>Chaque mixage ou pas de beat pad fait grimper la <strong>Jauge de Hype</strong>. À 100%, vous déclenchez le mode <strong>FRENZY (x10 de production)</strong> pendant 15 secondes !</p>
+                    </div>
+
+                    <!-- Chapitre 2 -->
+                    <div class="help-chapter" id="help-chapter-equipment">
+                        <h4>🎚️ Chapitre 2 : Équipements & Paliers R&D</h4>
+                        <p>Les 10 équipements de studio automatisent la production de dollars en continu. Utilisez les boutons <code>x1</code>, <code>x10</code>, <code>x25</code>, <code>x100</code> ou <code>MAX</code> pour optimiser vos achats.</p>
+                        
+                        <h5>⭐ Paliers de Puissance (Milestones)</h5>
+                        <p>Atteindre certains seuils de possession multiplie la production de l'équipement :</p>
+                        <ul class="help-bullet-list">
+                            <li><strong>Niveau 10</strong> : Production unitaire <strong>x2</strong></li>
+                            <li><strong>Niveau 25</strong> : Production unitaire <strong>x4</strong></li>
+                            <li><strong>Niveau 50</strong> : Production unitaire <strong>x10</strong></li>
+                            <li><strong>Niveau 100</strong> : Production unitaire <strong>x25</strong></li>
+                            <li><strong>Niveau 150</strong> : Palier Galactique <strong>x120</strong> !</li>
+                        </ul>
+                    </div>
+
+                    <!-- Chapitre 3 -->
+                    <div class="help-chapter" id="help-chapter-sequencer">
+                        <h4>🎹 Chapitre 3 : Séquenceur 16-Pas & Éditeur de Notes</h4>
+                        <p>Le séquenceur interactif permet de composer vos propres mélodies et rythmes en direct avec le moteur Web Audio polyphonique.</p>
+                        <ul class="help-bullet-list">
+                            <li><strong>Déblocage d'Instruments</strong> : Les 13 pistes (Kick, Snare, Hi-Hat, Synth Lead, Sub-Bass, Clap, Chord Pad, Piano, Pluck, Acid 303, Cordes, Brass, Drones) se débloquent avec vos équipements.</li>
+                            <li><strong>Édition de Notes</strong> :
+                                <ul>
+                                    <li><strong>Clic Gauche</strong> : Activer ou désactiver le pas.</li>
+                                    <li><strong>Clic Droit</strong> : Ouvrir le sélecteur de note flottant (Notes chromatiques, Octaves 1-6 ou Accords).</li>
+                                    <li><strong>Molette de la Souris</strong> : Transposer directement le pas de ±1 demi-ton avec préécoute live !</li>
+                                </ul>
+                            </li>
+                            <li><strong>Groove Bonus</strong> : Chaque pas actif booste votre multiplicateur de production global (jusqu'à <strong>+120%</strong>).</li>
+                        </ul>
+                    </div>
+
+                    <!-- Chapitre 4 -->
+                    <div class="help-chapter" id="help-chapter-label">
+                        <h4>🎤 Chapitre 4 : Label & Écurie d'Artistes</h4>
+                        <p>Signez des talents aux styles variés (Rappeur Trap, Diva Pop, Virtuose Jazz, Duo Robotique, Rockstar Cyberpunk).</p>
+                        <ul class="help-bullet-list">
+                            <li><strong>Missions</strong> : Envoyez-les en <em>Session Studio</em> (45s), <em>Promo TikTok</em> (2m) ou <em>Tournée Mondiale</em> (5m) pour récolter des gains massifs et des cassettes.</li>
+                            <li><strong>EXP & Niveaux</strong> : Chaque mission rapporte de l'EXP à l'artiste, augmentant ses attributs de Talent et Hype.</li>
+                            <li><strong>Libération / Transfert</strong> : Si votre écurie est pleine, cliquez sur <code>❌ Libérer</code> pour toucher une indemnité de rachat et faire de la place.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Chapitre 5 -->
+                    <div class="help-chapter" id="help-chapter-albums">
+                        <h4>💿 Chapitre 5 : Discographie & Billboard Mondial</h4>
+                        <p>Produisez des <em>Singles</em>, <em>EPs</em>, <em>Albums Studios</em> ou <em>Albums Live</em> dans 6 genres musicaux (Synthwave, French Touch, Lo-Fi, Trap, Cyberpunk, Future Bass).</p>
+                        <ul class="help-bullet-list">
+                            <li><strong>Générateur de Titres</strong> : Saisissez votre propre titre ou cliquez sur le dé 🎲 pour un nom thématique procédural.</li>
+                            <li><strong>Certifications</strong> : Selon la note critique (sur 10), votre projet peut décrocher le <strong>Disque d'Or</strong>, de <strong>Platine</strong> ou de <strong>Diamant</strong> !</li>
+                            <li><strong>Billboard Top 50</strong> : Vos morceaux entrent en compétition avec les hits planétaires pour conquérir la 1ère place.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Chapitre 6 -->
+                    <div class="help-chapter" id="help-chapter-mastering">
+                        <h4>🎛️ Chapitre 6 : Mastering Lab & Calibrage</h4>
+                        <p>Ajustez les trois curseurs d'égalisation analogique (Basses 80 Hz, Médiums 1 kHz, Aigus 12 kHz) pour vous rapprocher du profil acoustique secret.</p>
+                        <p>Plus votre précision est élevée, plus le multiplicateur de boost est colossal (jusqu'à <strong>x2.5 de Production</strong> pendant 60 à 120s).</p>
+                    </div>
+
+                    <!-- Chapitre 7 -->
+                    <div class="help-chapter" id="help-chapter-prestige">
+                        <h4>👑 Chapitre 7 : Refonte de Studio & Prestige 2.0</h4>
+                        <p>Lorsque votre progression ralentit, effectuez une <strong>Refonte du Studio</strong> pour convertir votre renommée en <strong>Points de Maîtrise 👑</strong> permanents.</p>
+                        <ul class="help-bullet-list">
+                            <li><strong>🎛️ Maîtrise Acoustique</strong> : +20% de Production globale par point.</li>
+                            <li><strong>💼 Empire du Business</strong> : -8% de Réduction des coûts et +15% de Renommée par point.</li>
+                            <li><strong>🔥 Overdrive de Hype</strong> : +3s de durée Frenzy et +25% aux gains de clic par point.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Chapitre 8 -->
+                    <div class="help-chapter" id="help-chapter-shortcuts">
+                        <h4>⌨️ Chapitre 8 : Tableau des Raccourcis Clavier</h4>
+                        <table class="help-shortcuts-table">
+                            <thead>
+                                <tr>
+                                    <th>Touche</th>
+                                    <th>Action</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><kbd>Espace</kbd></td>
+                                    <td>Mixer le morceau</td>
+                                    <td>Déclenche un mixage manuel à la platine</td>
+                                </tr>
+                                <tr>
+                                    <td><kbd>1</kbd> à <kbd>8</kbd></td>
+                                    <td>Beat Pads MPC</td>
+                                    <td>Joue Kick, Snare, Hi-Hat, Synth, Bass, Clap, Chord, Acid</td>
+                                </tr>
+                                <tr>
+                                    <td><kbd>P</kbd></td>
+                                    <td>Play / Pause Séquenceur</td>
+                                    <td>Démarre ou arrête la boucle du séquenceur 16-Pas</td>
+                                </tr>
+                                <tr>
+                                    <td><kbd>M</kbd></td>
+                                    <td>Mute / Unmute Son</td>
+                                    <td>Active ou coupe les effets sonores</td>
+                                </tr>
+                                <tr>
+                                    <td><kbd>H</kbd></td>
+                                    <td>Ouvrir l'Aide</td>
+                                    <td>Affiche ce guide interactif</td>
+                                </tr>
+                                <tr>
+                                    <td><kbd>O</kbd></td>
+                                    <td>Ouvrir les Options</td>
+                                    <td>Affiche les paramètres du studio</td>
+                                </tr>
+                                <tr>
+                                    <td><kbd>Échap</kbd></td>
+                                    <td>Fermer les modales</td>
+                                    <td>Ferme toute fenêtre ouverte</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modale Terminal de Codes Secrets -->
+    <div id="secret-terminal-modal" class="studio-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>💻 Terminal de Codes Secrets de Producteur</h3>
+                <button class="modal-close-btn" id="close-terminal-btn">✖</button>
+            </div>
+            <div class="modal-body">
+                <p>Entrez un code promo secret de producteur (ex: <code>808MAFIA</code>, <code>DAFT</code>, <code>ANALOG</code>, <code>GRAMMY</code>, <code>KONAMI</code>) :</p>
+                <div class="terminal-input-group">
+                    <input type="text" id="secret-code-input" placeholder="CODE SECRET..." class="terminal-input" maxlength="20">
+                    <button id="submit-secret-code-btn" class="terminal-submit-btn">ACTIVER</button>
+                </div>
+                <div id="secret-code-feedback" class="secret-feedback"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modale Export / Import de Sauvegarde -->
+    <div id="backup-modal" class="studio-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>💾 Synchronisation & Sauvegarde (Base64)</h3>
+                <button class="modal-close-btn" id="close-backup-btn">✖</button>
+            </div>
+            <div class="modal-body">
+                <h4>Exporter votre partie :</h4>
+                <p>Copiez cette clé pour transférer votre progression sur un autre navigateur :</p>
+                <textarea id="export-save-textarea" class="save-textarea" readonly></textarea>
+                <button id="copy-save-btn" class="save-action-btn">📋 Copier dans le presse-papier</button>
+
+                <hr class="modal-divider">
+
+                <h4>Importer une partie :</h4>
+                <p>Collez une clé de sauvegarde ci-dessous :</p>
+                <textarea id="import-save-textarea" class="save-textarea" placeholder="Collez votre clé de sauvegarde ici..."></textarea>
+                <button id="submit-import-save-btn" class="save-action-btn import">📥 Charger cette sauvegarde</button>
+                <div id="import-save-feedback" class="secret-feedback"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modale Gains Hors-Ligne Pro -->
+    <div id="offline-modal" class="studio-modal">
+        <div class="modal-content offline-popup">
+            <div class="modal-header">
+                <h3>⏰ Bon Retour au Studio !</h3>
+            </div>
+            <div class="modal-body text-center">
+                <div class="offline-icon-hero">🎧💰</div>
+                <p class="offline-time-intro">Pendant votre pause de <strong id="offline-time-text" class="cyan">0s</strong>, vos machines, albums et artistes ont généré :</p>
+                <div class="offline-money-badge" id="offline-money-text">+0 $</div>
+                <p class="offline-subtext">Vos royalties et recettes passives ont été créditées sur votre compte.</p>
+                <button id="claim-offline-btn" class="claim-offline-btn">🚀 RÉCUPÉRER LES GAINS</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modale Accordage des 8 Pads / Clavier Mélodique -->
+    <div id="tuner-modal" class="studio-modal">
+        <div class="modal-content tuner-popup">
+            <div class="modal-header">
+                <h3 id="tuner-modal-title">🎹 Accordage des 8 Boutons</h3>
+                <button class="modal-close" id="close-tuner-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="tuner-intro">Personnalisez les notes jouées par les touches 1 à 8 pour cet instrument :</p>
+                
+                <div class="tuner-pads-grid" id="tuner-pads-grid">
+                    <!-- Généré dynamiquement par ui.js -->
+                </div>
+
+                <div class="tuner-quick-presets">
+                    <span class="tuner-presets-label">Gamme Rapide :</span>
+                    <div class="tuner-preset-tags">
+                        <button class="tuner-preset-tag" data-scale="synthwave">🌆 Synthwave</button>
+                        <button class="tuner-preset-tag" data-scale="french_touch">🥖 French</button>
+                        <button class="tuner-preset-tag" data-scale="trap">🔥 Trap</button>
+                        <button class="tuner-preset-tag" data-scale="lofi">☕ Lo-Fi</button>
+                        <button class="tuner-preset-tag" data-scale="japanese">🌸 Japonaise</button>
+                        <button class="tuner-preset-tag" data-scale="major">☀️ Majeure</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer tuner-footer">
+                <button class="modal-secondary-btn" id="tuner-trans-down-btn">-♭ Demi-ton</button>
+                <button class="modal-secondary-btn" id="tuner-trans-up-btn">+♯ Demi-ton</button>
+                <button class="modal-primary-btn" id="tuner-apply-btn">✓ TERMINER</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts du jeu dans l'ordre logique -->
+    <script src="js/state.js"></script>
+    <script src="js/resources.js"></script>
+    <script src="js/audio.js"></script>
+    <script src="js/visualizer.js"></script>
+    <script src="js/equipment.js"></script>
+    <script src="js/upgrades.js"></script>
+    <script src="js/sequencer.js"></script>
+    <script src="js/artists.js"></script>
+    <script src="js/charts_board.js"></script>
+    <script src="js/quests.js"></script>
+    <script src="js/albums.js"></script>
+    <script src="js/minigame.js"></script>
+    <script src="js/contracts.js"></script>
+    <script src="js/production.js"></script>
+    <script src="js/boosters.js"></script>
+    <script src="js/achievements.js"></script>
+    <script src="js/events.js"></script>
+    <script src="js/prestige.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/stats.js"></script>
+    <script src="js/save.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/main.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 240" width="100%" height="100%">
+  <defs>
+    <linearGradient id="artistBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#120c24"/>
+      <stop offset="50%" stop-color="#1f1138"/>
+      <stop offset="100%" stop-color="#0b0817"/>
+    </linearGradient>
+    <linearGradient id="neonPink" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ff007f"/>
+      <stop offset="100%" stop-color="#7928ca"/>
+    </linearGradient>
+    <filter id="glowPink" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="800" height="240" rx="16" fill="url(#artistBg)" stroke="rgba(255, 0, 127, 0.4)" stroke-width="1.5"/>
+
+  <!-- Stage Lights & Beams -->
+  <polygon points="120,0 220,240 180,240 80,0" fill="#00f2fe" opacity="0.15"/>
+  <polygon points="680,0 580,240 620,240 720,0" fill="#ff007f" opacity="0.15"/>
+  <polygon points="400,0 350,240 450,240" fill="#ffd700" opacity="0.08"/>
+
+  <!-- Stylized Artist Silhouettes -->
+  <!-- Lead Vocalist / Diva -->
+  <g transform="translate(400, 140)">
+    <circle cx="0" cy="-45" r="18" fill="#ffd700" filter="url(#glowPink)"/>
+    <path d="M-22 -20 C -22 -20, 0 -30, 22 -20 L 35 60 L -35 60 Z" fill="url(#neonPink)" opacity="0.9"/>
+    <!-- Mic Stand -->
+    <line x1="8" y1="-35" x2="15" y2="60" stroke="#00f2fe" stroke-width="2.5"/>
+    <circle cx="8" cy="-35" r="5" fill="#00f2fe" filter="url(#glowPink)"/>
+  </g>
+
+  <!-- Cyber DJ / Producer (Left) -->
+  <g transform="translate(240, 150)">
+    <circle cx="0" cy="-40" r="16" fill="#00f2fe"/>
+    <!-- Cyber Visor -->
+    <rect x="-14" y="-43" width="28" height="7" rx="3" fill="#00ff88" filter="url(#glowPink)"/>
+    <!-- Headphones -->
+    <path d="M-18 -40 C -18 -60, 18 -60, 18 -40" fill="none" stroke="#ffd700" stroke-width="3"/>
+    <rect x="-22" y="-44" width="7" height="14" rx="2" fill="#ffd700"/>
+    <rect x="15" y="-44" width="7" height="14" rx="2" fill="#ffd700"/>
+    <!-- Body & Synth Pad -->
+    <path d="M-20 -15 L 20 -15 L 25 50 L -25 50 Z" fill="#2a1b4e"/>
+    <rect x="-35" y="10" width="70" height="20" rx="4" fill="#120c24" stroke="#00f2fe" stroke-width="1.5"/>
+    <circle cx="-20" cy="20" r="3" fill="#ff007f"/>
+    <circle cx="-5" cy="20" r="3" fill="#00ff88"/>
+    <circle cx="10" cy="20" r="3" fill="#00f2fe"/>
+    <circle cx="25" cy="20" r="3" fill="#ffd700"/>
+  </g>
+
+  <!-- Lead Guitarist / Rockstar (Right) -->
+  <g transform="translate(560, 150)">
+    <circle cx="0" cy="-40" r="16" fill="#ff007f"/>
+    <path d="M-18 -15 L 18 -15 L 24 50 L -24 50 Z" fill="#381347"/>
+    <!-- Cyber Flying V Guitar -->
+    <polygon points="-40,-10 30,35 -20,40" fill="#00f2fe" stroke="#ffd700" stroke-width="1.5" filter="url(#glowPink)"/>
+    <line x1="-40" y1="-10" x2="-65" y2="-45" stroke="#e2e8f0" stroke-width="3"/>
+  </g>
+
+  <!-- Title Badge -->
+  <g transform="translate(400, 45)">
+    <text x="0" y="0" font-family="'Space Grotesk', sans-serif" font-size="20" font-weight="900" fill="#fff" text-anchor="middle" letter-spacing="2">ÉCURIE DE TALENTS & LABEL MANAGEMENT</text>
+    <text x="0" y="22" font-family="'Outfit', sans-serif" font-size="12" font-weight="600" fill="#a78bfa" text-anchor="middle" letter-spacing="1">RECRUTEMENT • PROMO TIKTOK • TOURNÉES MONDIALES</text>
+  </g>
+</svg>

@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 240" width="100%" height="100%">
+  <defs>
+    <linearGradient id="trophyBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1f1805"/>
+      <stop offset="50%" stop-color="#2d2208"/>
+      <stop offset="100%" stop-color="#0e0a02"/>
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff099"/>
+      <stop offset="40%" stop-color="#ffd700"/>
+      <stop offset="80%" stop-color="#d4af37"/>
+      <stop offset="100%" stop-color="#997a15"/>
+    </linearGradient>
+    <linearGradient id="platGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="50%" stop-color="#cbd5e1"/>
+      <stop offset="100%" stop-color="#64748b"/>
+    </linearGradient>
+    <filter id="goldGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="800" height="240" rx="16" fill="url(#trophyBg)" stroke="rgba(255, 215, 0, 0.45)" stroke-width="1.5"/>
+
+  <!-- Golden Rays of Prestige -->
+  <polygon points="400,0 350,240 450,240" fill="#ffd700" opacity="0.08"/>
+  <polygon points="400,0 200,240 260,240" fill="#ffd700" opacity="0.05"/>
+  <polygon points="400,0 540,240 600,240" fill="#ffd700" opacity="0.05"/>
+
+  <!-- Left: Framed Gold Record Plaque -->
+  <g transform="translate(180, 130)">
+    <rect x="-60" y="-55" width="120" height="110" rx="8" fill="#141419" stroke="url(#goldGrad)" stroke-width="3" filter="url(#goldGlow)"/>
+    <circle cx="0" cy="-10" r="34" fill="url(#goldGrad)"/>
+    <circle cx="0" cy="-10" r="12" fill="#111"/>
+    <circle cx="0" cy="-10" r="4" fill="url(#goldGrad)"/>
+    <rect x="-40" y="32" width="80" height="14" rx="2" fill="url(#goldGrad)"/>
+    <text x="0" y="42" font-family="'Space Grotesk', sans-serif" font-size="8" font-weight="bold" fill="#111" text-anchor="middle">DISQUE D'OR</text>
+  </g>
+
+  <!-- Center: The Grammy Golden Gramophone Award -->
+  <g transform="translate(400, 135)">
+    <!-- Base -->
+    <rect x="-45" y="35" width="90" height="20" rx="3" fill="#1c1917" stroke="url(#goldGrad)" stroke-width="2"/>
+    <rect x="-35" y="40" width="70" height="10" rx="2" fill="url(#goldGrad)"/>
+    <text x="0" y="48" font-family="'Space Grotesk', sans-serif" font-size="7" font-weight="900" fill="#111" text-anchor="middle">GRAMMY AWARD</text>
+    <!-- Gramophone Horn & Arm -->
+    <path d="M-15 35 L -15 10 Q -15 -10, 5 -25 L 35 -40 L 40 -15 L 15 5 Z" fill="url(#goldGrad)" filter="url(#goldGlow)"/>
+    <!-- Big Horn Flare -->
+    <ellipse cx="38" cy="-28" rx="20" ry="32" fill="url(#goldGrad)" stroke="#fff" stroke-width="1.5" transform="rotate(-25 38 -28)" filter="url(#goldGlow)"/>
+    <!-- Turntable disc box -->
+    <rect x="-35" y="15" width="40" height="20" rx="2" fill="url(#goldGrad)"/>
+  </g>
+
+  <!-- Right: Framed Platinum Record Plaque -->
+  <g transform="translate(620, 130)">
+    <rect x="-60" y="-55" width="120" height="110" rx="8" fill="#141419" stroke="url(#platGrad)" stroke-width="3"/>
+    <circle cx="0" cy="-10" r="34" fill="url(#platGrad)" filter="url(#goldGlow)"/>
+    <circle cx="0" cy="-10" r="12" fill="#111"/>
+    <circle cx="0" cy="-10" r="4" fill="url(#platGrad)"/>
+    <rect x="-40" y="32" width="80" height="14" rx="2" fill="url(#platGrad)"/>
+    <text x="0" y="42" font-family="'Space Grotesk', sans-serif" font-size="8" font-weight="bold" fill="#111" text-anchor="middle">PLATINE / DIAMANT</text>
+  </g>
+
+  <!-- Header Title -->
+  <g transform="translate(400, 42)">
+    <text x="0" y="0" font-family="'Space Grotesk', sans-serif" font-size="20" font-weight="900" fill="#ffd700" text-anchor="middle" letter-spacing="2">VITRINE OFFICIELLE DES CERTIFICATIONS & GRAMMYS</text>
+    <text x="0" y="22" font-family="'Outfit', sans-serif" font-size="12" font-weight="600" fill="#fef08a" text-anchor="middle" letter-spacing="1">MULTIPLICATEURS PERMANENTS DE PRODUCTION STUDIO</text>
+  </g>
+</svg>
