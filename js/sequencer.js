@@ -184,18 +184,105 @@ const INSTRUMENT_DEFS = [
     }
 ];
 
-// Notes mélodiques par défaut pour chaque piste (16 pas)
+// Notes mélodiques par défaut pour chaque piste (étendu à 32 pas / 2 Mesures)
 const DEFAULT_TRACK_NOTES = {
-    synth:   ['A3', 'C4', 'D4', 'E4', 'G4', 'A4', 'C5', 'E5', 'A3', 'C4', 'D4', 'E4', 'G4', 'A4', 'C5', 'E5'],
-    bass:    ['A1', 'A1', 'C2', 'D2', 'E2', 'G2', 'A2', 'A1', 'A1', 'A1', 'C2', 'D2', 'E2', 'G2', 'A2', 'E2'],
-    pad:     ['Am', 'Am', 'Fmaj', 'Fmaj', 'Cmaj', 'Cmaj', 'Gmaj', 'Gmaj', 'Am', 'Am', 'Fmaj', 'Fmaj', 'Cmaj', 'Cmaj', 'Em', 'Gmaj'],
-    piano:   ['C4', 'E4', 'G4', 'B4', 'C5', 'G4', 'E4', 'C4', 'D4', 'F4', 'A4', 'C5', 'D5', 'A4', 'F4', 'D4'],
-    pluck:   ['A4', 'C5', 'E5', 'A5', 'G5', 'E5', 'D5', 'C5', 'A4', 'C5', 'E5', 'A5', 'G5', 'E5', 'D5', 'E5'],
-    acid:    ['C3', 'C3', 'D#3', 'F3', 'G3', 'A#3', 'C4', 'G3', 'F3', 'D#3', 'C3', 'C3', 'D#3', 'F3', 'G3', 'C3'],
-    strings: ['A3', 'A3', 'A3', 'A3', 'F3', 'F3', 'F3', 'F3', 'C4', 'C4', 'C4', 'C4', 'G3', 'G3', 'G3', 'G3'],
-    brass:   ['C4', 'C4', 'E4', 'G4', 'Bb4', 'C5', 'Bb4', 'G4', 'C4', 'C4', 'E4', 'G4', 'Bb4', 'C5', 'D5', 'C5'],
-    cosmic:  ['C3', 'G3', 'C4', 'E4', 'G4', 'C5', 'G4', 'E4', 'C3', 'G3', 'C4', 'E4', 'G4', 'C5', 'G4', 'C4']
+    synth:   [
+        'A3', 'C4', 'D4', 'E4', 'G4', 'A4', 'C5', 'E5', 'A3', 'C4', 'D4', 'E4', 'G4', 'A4', 'C5', 'E5',
+        'F4', 'G4', 'A4', 'C5', 'D5', 'E5', 'G5', 'A5', 'E5', 'D5', 'C5', 'A4', 'G4', 'E4', 'D4', 'C4'
+    ],
+    bass:    [
+        'A1', 'A1', 'C2', 'D2', 'E2', 'G2', 'A2', 'A1', 'A1', 'A1', 'C2', 'D2', 'E2', 'G2', 'A2', 'E2',
+        'F1', 'F1', 'G1', 'G1', 'A1', 'C2', 'D2', 'E2', 'F2', 'E2', 'D2', 'C2', 'A1', 'G1', 'E1', 'A1'
+    ],
+    pad:     [
+        'Am', 'Am', 'Fmaj', 'Fmaj', 'Cmaj', 'Cmaj', 'Gmaj', 'Gmaj', 'Am', 'Am', 'Fmaj', 'Fmaj', 'Cmaj', 'Cmaj', 'Em', 'Gmaj',
+        'Dm', 'Dm', 'Fmaj', 'Fmaj', 'Am', 'Am', 'Gmaj', 'Gmaj', 'Fmaj', 'Gmaj', 'Am', 'Am', 'Dm7', 'Em7', 'Am7', 'Am7'
+    ],
+    piano:   [
+        'C4', 'E4', 'G4', 'B4', 'C5', 'G4', 'E4', 'C4', 'D4', 'F4', 'A4', 'C5', 'D5', 'A4', 'F4', 'D4',
+        'E4', 'G4', 'B4', 'D5', 'C5', 'A4', 'F4', 'D4', 'C4', 'E4', 'G4', 'B4', 'C5', 'E5', 'G5', 'C5'
+    ],
+    pluck:   [
+        'A4', 'C5', 'E5', 'A5', 'G5', 'E5', 'D5', 'C5', 'A4', 'C5', 'E5', 'A5', 'G5', 'E5', 'D5', 'E5',
+        'F5', 'A5', 'C6', 'E6', 'D6', 'C6', 'A5', 'G5', 'A5', 'C6', 'E6', 'G6', 'E6', 'D6', 'C6', 'A5'
+    ],
+    acid:    [
+        'C3', 'C3', 'D#3', 'F3', 'G3', 'A#3', 'C4', 'G3', 'F3', 'D#3', 'C3', 'C3', 'D#3', 'F3', 'G3', 'C3',
+        'C3', 'D#3', 'F#3', 'G3', 'A#3', 'C4', 'D#4', 'C4', 'A#3', 'G3', 'F3', 'D#3', 'C3', 'A#2', 'G2', 'C3'
+    ],
+    strings: [
+        'A3', 'A3', 'A3', 'A3', 'F3', 'F3', 'F3', 'F3', 'C4', 'C4', 'C4', 'C4', 'G3', 'G3', 'G3', 'G3',
+        'D4', 'D4', 'D4', 'D4', 'F4', 'F4', 'F4', 'F4', 'A4', 'A4', 'A4', 'A4', 'E4', 'E4', 'G4', 'A4'
+    ],
+    brass:   [
+        'C4', 'C4', 'E4', 'G4', 'Bb4', 'C5', 'Bb4', 'G4', 'C4', 'C4', 'E4', 'G4', 'Bb4', 'C5', 'D5', 'C5',
+        'F4', 'F4', 'A4', 'C5', 'Eb5', 'F5', 'Eb5', 'C5', 'G4', 'Bb4', 'D5', 'F5', 'G5', 'F5', 'D5', 'C5'
+    ],
+    cosmic:  [
+        'C3', 'G3', 'C4', 'E4', 'G4', 'C5', 'G4', 'E4', 'C3', 'G3', 'C4', 'E4', 'G4', 'C5', 'G4', 'C4',
+        'A2', 'E3', 'A3', 'C4', 'E4', 'A4', 'E4', 'C4', 'F2', 'C3', 'F3', 'A3', 'C4', 'E4', 'G4', 'C3'
+    ]
 };
+
+/**
+ * Récupère le nombre de pas / temps actif pour la boucle du séquenceur (2, 4, 8, 16 ou 32).
+ */
+function getSequencerStepCount() {
+    return (GameState.sequencer && GameState.sequencer.stepCount) ? GameState.sequencer.stepCount : 16;
+}
+
+/**
+ * Modifie le nombre de pas du séquenceur (2, 4, 8, 16 ou 32 temps).
+ */
+function setSequencerStepCount(newCount) {
+    const validCounts = [2, 4, 8, 16, 32];
+    const target = parseInt(newCount, 10);
+    if (!validCounts.includes(target)) return;
+
+    if (!GameState.sequencer) initSequencer();
+    GameState.sequencer.stepCount = target;
+    GameState.sequencer.currentStep = GameState.sequencer.currentStep % target;
+
+    // S'assure que toutes les pistes et notes disposent de 32 pas alloués en mémoire
+    ensureSequencerCapacity();
+
+    calculateGrooveBonus();
+    if (typeof initSequencerUI === 'function') {
+        initSequencerUI();
+    }
+}
+
+/**
+ * Assure que toutes les pistes possèdent un tableau de 32 pas complet.
+ */
+function ensureSequencerCapacity() {
+    if (!GameState.sequencer) return;
+    if (!GameState.sequencer.tracks) GameState.sequencer.tracks = {};
+    if (!GameState.sequencer.stepNotes) GameState.sequencer.stepNotes = {};
+
+    INSTRUMENT_DEFS.forEach(inst => {
+        if (!GameState.sequencer.tracks[inst.id] || GameState.sequencer.tracks[inst.id].length < 32) {
+            const current = GameState.sequencer.tracks[inst.id] || [];
+            const extended = Array(32).fill(false);
+            for (let i = 0; i < current.length && i < 32; i++) {
+                extended[i] = current[i];
+            }
+            GameState.sequencer.tracks[inst.id] = extended;
+        }
+
+        if (inst.type === 'melodic') {
+            if (!GameState.sequencer.stepNotes[inst.id] || GameState.sequencer.stepNotes[inst.id].length < 32) {
+                const currentNotes = GameState.sequencer.stepNotes[inst.id] || [];
+                const defs = DEFAULT_TRACK_NOTES[inst.id] || Array(32).fill('C4');
+                const extendedNotes = [...defs];
+                for (let i = 0; i < currentNotes.length && i < 32; i++) {
+                    if (currentNotes[i]) extendedNotes[i] = currentNotes[i];
+                }
+                GameState.sequencer.stepNotes[inst.id] = extendedNotes;
+            }
+        }
+    });
+}
 
 /**
  * Récupère la note assignée à un pas du séquenceur.
@@ -213,11 +300,9 @@ function getSequencerStepNote(trackId, stepIndex) {
  */
 function setSequencerStepNote(trackId, stepIndex, noteStr) {
     if (!GameState.sequencer) initSequencer();
-    if (!GameState.sequencer.stepNotes) GameState.sequencer.stepNotes = {};
-    if (!GameState.sequencer.stepNotes[trackId]) {
-        GameState.sequencer.stepNotes[trackId] = DEFAULT_TRACK_NOTES[trackId] ? [...DEFAULT_TRACK_NOTES[trackId]] : Array(16).fill('C4');
-    }
+    ensureSequencerCapacity();
     GameState.sequencer.stepNotes[trackId][stepIndex] = noteStr;
+    calculateGrooveBonus();
     if (typeof updateSequencerUI === 'function') {
         updateSequencerUI();
     }
@@ -264,92 +349,287 @@ function shiftSequencerStepNote(trackId, stepIndex, semitoneDelta) {
     return newNote;
 }
 
-// Presets de styles de production complets sur 13 pistes
+// Presets de styles de production complets sur 13 pistes (sur 32 pas / 2 Mesures avec variations)
 const SEQUENCER_PRESETS = {
     house: {
         name: '🥖 French Touch (124 BPM)',
         bpm: 124,
-        kick:    [true, false, false, false, true, false, false, false, true, false, false, false, true, false, false, false],
-        snare:   [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false],
-        hihat:   [false, false, true, false, false, false, true, false, false, false, true, false, false, false, true, false],
-        synth:   [true, false, false, true, false, false, true, false, false, true, false, false, true, false, false, true],
-        bass:    [true, false, false, false, true, false, false, true, false, false, true, false, true, false, false, false],
-        clap:    [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false],
-        pad:     [true, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false],
-        piano:   [false, false, true, false, false, false, true, false, false, false, true, false, false, true, false, false],
-        pluck:   [false, true, false, false, true, false, false, true, false, true, false, false, true, false, false, true],
-        acid:    [false, false, true, false, true, false, false, true, false, false, true, false, true, false, true, false],
-        strings: [true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false],
-        brass:   [false, false, false, false, true, false, false, false, false, false, false, false, true, false, true, false],
-        cosmic:  [false, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false]
+        kick:    [
+            true, false, false, false, true, false, false, false, true, false, false, false, true, false, false, false,
+            true, false, false, false, true, false, false, false, true, false, false, false, true, false, true, false
+        ],
+        snare:   [
+            false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false,
+            false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, true
+        ],
+        hihat:   [
+            false, false, true, false, false, false, true, false, false, false, true, false, false, false, true, false,
+            false, false, true, false, false, false, true, false, false, false, true, false, true, true, true, true
+        ],
+        synth:   [
+            true, false, false, true, false, false, true, false, false, true, false, false, true, false, false, true,
+            true, false, false, true, false, false, true, false, false, true, false, true, true, false, true, false
+        ],
+        bass:    [
+            true, false, false, false, true, false, false, true, false, false, true, false, true, false, false, false,
+            true, false, false, false, true, false, false, true, false, false, true, false, true, true, false, false
+        ],
+        clap:    [
+            false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false,
+            false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false
+        ],
+        pad:     [
+            true, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false,
+            true, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false
+        ],
+        piano:   [
+            false, false, true, false, false, false, true, false, false, false, true, false, false, true, false, false,
+            false, false, true, false, false, false, true, false, false, false, true, false, false, true, true, false
+        ],
+        pluck:   [
+            false, true, false, false, true, false, false, true, false, true, false, false, true, false, false, true,
+            false, true, false, false, true, false, false, true, false, true, false, false, true, true, true, false
+        ],
+        acid:    [
+            false, false, true, false, true, false, false, true, false, false, true, false, true, false, true, false,
+            false, false, true, false, true, false, false, true, false, false, true, false, true, true, false, true
+        ],
+        strings: [
+            true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+            true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false
+        ],
+        brass:   [
+            false, false, false, false, true, false, false, false, false, false, false, false, true, false, true, false,
+            false, false, false, false, true, false, false, false, false, false, false, false, true, true, false, false
+        ],
+        cosmic:  [
+            false, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false,
+            false, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false
+        ]
     },
     synthwave: {
         name: '🌆 80s Outrun Synthwave (118 BPM)',
         bpm: 118,
-        kick:    [true, false, false, false, false, false, true, false, true, false, false, false, false, false, true, false],
-        snare:   [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false],
-        hihat:   [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true],
-        synth:   [true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false],
-        bass:    [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true],
-        clap:    [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false],
-        pad:     [true, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false],
-        piano:   [true, false, false, false, false, true, false, false, true, false, false, false, false, true, false, false],
-        pluck:   [false, false, true, false, false, false, true, false, false, false, true, false, false, false, true, false],
-        acid:    [false, false, false, false, false, false, true, false, false, false, false, false, false, false, true, false],
-        strings: [true, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false],
-        brass:   [true, false, false, true, false, false, false, false, true, false, false, true, false, false, false, false],
-        cosmic:  [true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false]
+        kick:    [
+            true, false, false, false, false, false, true, false, true, false, false, false, false, false, true, false,
+            true, false, false, false, false, false, true, false, true, false, false, false, false, true, true, false
+        ],
+        snare:   [
+            false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false,
+            false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, true
+        ],
+        hihat:   [
+            true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true,
+            true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true
+        ],
+        synth:   [
+            true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false,
+            true, false, true, false, true, false, true, false, true, false, true, true, true, false, true, false
+        ],
+        bass:    [
+            true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true,
+            true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true
+        ],
+        clap:    [
+            false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false,
+            false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false
+        ],
+        pad:     [
+            true, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false,
+            true, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false
+        ],
+        piano:   [
+            true, false, false, false, false, true, false, false, true, false, false, false, false, true, false, false,
+            true, false, false, false, false, true, false, false, true, false, false, false, false, true, true, false
+        ],
+        pluck:   [
+            false, false, true, false, false, false, true, false, false, false, true, false, false, false, true, false,
+            false, false, true, false, false, false, true, false, false, false, true, false, true, false, true, false
+        ],
+        acid:    [
+            false, false, false, false, false, false, true, false, false, false, false, false, false, false, true, false,
+            false, false, false, false, false, false, true, false, false, false, false, false, true, false, true, false
+        ],
+        strings: [
+            true, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false,
+            true, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false
+        ],
+        brass:   [
+            true, false, false, true, false, false, false, false, true, false, false, true, false, false, false, false,
+            true, false, false, true, false, false, false, false, true, false, false, true, false, true, false, false
+        ],
+        cosmic:  [
+            true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+            true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false
+        ]
     },
     trap: {
         name: '🔥 Dark Trap 808 (140 BPM)',
         bpm: 140,
-        kick:    [true, false, false, false, false, false, false, false, false, false, true, false, false, false, false, false],
-        snare:   [false, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false],
-        hihat:   [true, false, true, true, true, false, true, true, true, false, true, true, true, true, true, true],
-        synth:   [true, false, false, false, false, true, false, false, false, false, false, true, false, false, true, false],
-        bass:    [true, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false],
-        clap:    [false, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false],
-        pad:     [true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false],
-        piano:   [false, false, true, false, false, false, false, true, false, false, true, false, false, false, true, false],
-        pluck:   [true, false, false, true, false, false, true, false, false, true, false, false, true, false, false, false],
-        acid:    [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false],
-        strings: [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false],
-        brass:   [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false],
-        cosmic:  [false, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false]
+        kick:    [
+            true, false, false, false, false, false, false, false, false, false, true, false, false, false, false, false,
+            true, false, false, false, false, false, false, false, false, false, true, false, true, false, false, false
+        ],
+        snare:   [
+            false, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false,
+            false, false, false, false, false, false, false, false, true, false, false, false, false, false, true, false
+        ],
+        hihat:   [
+            true, false, true, true, true, false, true, true, true, false, true, true, true, true, true, true,
+            true, false, true, true, true, false, true, true, true, false, true, true, true, true, true, true
+        ],
+        synth:   [
+            true, false, false, false, false, true, false, false, false, false, false, true, false, false, true, false,
+            true, false, false, false, false, true, false, false, false, false, false, true, false, true, false, false
+        ],
+        bass:    [
+            true, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false,
+            true, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false
+        ],
+        clap:    [
+            false, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false,
+            false, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false
+        ],
+        pad:     [
+            true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+            true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false
+        ],
+        piano:   [
+            false, false, true, false, false, false, false, true, false, false, true, false, false, false, true, false,
+            false, false, true, false, false, false, false, true, false, false, true, false, false, true, false, false
+        ],
+        pluck:   [
+            true, false, false, true, false, false, true, false, false, true, false, false, true, false, false, false,
+            true, false, false, true, false, false, true, false, false, true, false, false, true, false, true, false
+        ],
+        acid:    [
+            false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+            false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false
+        ],
+        strings: [
+            false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false,
+            false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false
+        ],
+        brass:   [
+            false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+            false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false
+        ],
+        cosmic:  [
+            false, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false,
+            false, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false
+        ]
     },
     cyberpunk: {
         name: '🤖 Cyberpunk Techno (132 BPM)',
         bpm: 132,
-        kick:    [true, false, false, false, true, false, false, false, true, false, false, false, true, false, false, false],
-        snare:   [false, false, false, false, true, false, false, false, false, false, false, false, true, false, true, false],
-        hihat:   [true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false],
-        synth:   [true, true, false, true, true, false, true, true, false, true, true, false, true, true, false, true],
-        bass:    [true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false],
-        clap:    [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false],
-        pad:     [false, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false],
-        piano:   [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false],
-        pluck:   [false, true, true, false, false, true, true, false, false, true, true, false, false, true, true, false],
-        acid:    [true, false, true, true, false, true, true, false, true, false, true, true, false, true, true, false],
-        strings: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false],
-        brass:   [true, false, false, false, true, false, false, false, true, false, false, false, true, false, false, false],
-        cosmic:  [true, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false]
+        kick:    [
+            true, false, false, false, true, false, false, false, true, false, false, false, true, false, false, false,
+            true, false, false, false, true, false, false, false, true, false, false, false, true, false, true, false
+        ],
+        snare:   [
+            false, false, false, false, true, false, false, false, false, false, false, false, true, false, true, false,
+            false, false, false, false, true, false, false, false, false, false, false, false, true, false, true, true
+        ],
+        hihat:   [
+            true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false,
+            true, false, true, false, true, false, true, false, true, false, true, false, true, true, true, true
+        ],
+        synth:   [
+            true, true, false, true, true, false, true, true, false, true, true, false, true, true, false, true,
+            true, true, false, true, true, false, true, true, false, true, true, false, true, true, true, false
+        ],
+        bass:    [
+            true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false,
+            true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false
+        ],
+        clap:    [
+            false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false,
+            false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false
+        ],
+        pad:     [
+            false, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false,
+            false, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false
+        ],
+        piano:   [
+            false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+            false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false
+        ],
+        pluck:   [
+            false, true, true, false, false, true, true, false, false, true, true, false, false, true, true, false,
+            false, true, true, false, false, true, true, false, false, true, true, false, true, true, true, false
+        ],
+        acid:    [
+            true, false, true, true, false, true, true, false, true, false, true, true, false, true, true, false,
+            true, false, true, true, false, true, true, false, true, false, true, true, true, false, true, true
+        ],
+        strings: [
+            false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+            false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false
+        ],
+        brass:   [
+            true, false, false, false, true, false, false, false, true, false, false, false, true, false, false, false,
+            true, false, false, false, true, false, false, false, true, false, false, false, true, false, false, false
+        ],
+        cosmic:  [
+            true, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false,
+            true, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false
+        ]
     },
     lofi: {
         name: '☕ Lo-Fi Chill Beats (85 BPM)',
         bpm: 85,
-        kick:    [true, false, false, false, false, false, true, false, false, false, true, false, false, false, false, false],
-        snare:   [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false],
-        hihat:   [true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false],
-        synth:   [true, false, false, false, true, false, false, false, true, false, false, false, false, false, true, false],
-        bass:    [true, false, false, false, false, false, true, false, false, false, true, false, false, false, false, false],
-        clap:    [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false],
-        pad:     [true, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false],
-        piano:   [true, false, false, true, false, false, true, false, false, true, false, false, true, false, false, false],
-        pluck:   [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false],
-        acid:    [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false],
-        strings: [true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false],
-        brass:   [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false],
-        cosmic:  [false, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false]
+        kick:    [
+            true, false, false, false, false, false, true, false, false, false, true, false, false, false, false, false,
+            true, false, false, false, false, false, true, false, false, false, true, false, false, false, true, false
+        ],
+        snare:   [
+            false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false,
+            false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false
+        ],
+        hihat:   [
+            true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false,
+            true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false
+        ],
+        synth:   [
+            true, false, false, false, true, false, false, false, true, false, false, false, false, false, true, false,
+            true, false, false, false, true, false, false, false, true, false, false, false, false, false, false, false
+        ],
+        bass:    [
+            true, false, false, false, false, false, true, false, false, false, true, false, false, false, false, false,
+            true, false, false, false, false, false, true, false, false, false, true, false, false, false, false, false
+        ],
+        clap:    [
+            false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+            false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false
+        ],
+        pad:     [
+            true, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false,
+            true, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false
+        ],
+        piano:   [
+            true, false, false, true, false, false, true, false, false, true, false, false, true, false, false, false,
+            true, false, false, true, false, false, true, false, false, true, false, false, true, false, false, false
+        ],
+        pluck:   [
+            false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+            false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false
+        ],
+        acid:    [
+            false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+            false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false
+        ],
+        strings: [
+            true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+            true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false
+        ],
+        brass:   [
+            false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+            false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false
+        ],
+        cosmic:  [
+            false, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false,
+            false, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false
+        ]
     }
 };
 
@@ -364,7 +644,7 @@ function isInstrumentUnlocked(trackId) {
 }
 
 /**
- * Initialise le séquenceur avec toutes les pistes.
+ * Initialise le séquenceur avec toutes les pistes et la capacité multi-temps.
  */
 function initSequencer() {
     if (!GameState.sequencer) {
@@ -372,29 +652,27 @@ function initSequencer() {
             isPlaying: false,
             bpm: 124,
             currentStep: 0,
+            stepCount: 16,
             tracks: {},
+            stepNotes: {},
             grooveBonus: 0,
+            musicalityScore: 0,
+            grooveStatus: 'Équilibré',
             activePreset: 'house'
         };
     }
 
-    // Assure l'initialisation de chaque piste et des notes assignées
-    if (!GameState.sequencer.stepNotes) {
-        GameState.sequencer.stepNotes = {};
+    if (!GameState.sequencer.stepCount) {
+        GameState.sequencer.stepCount = 16;
     }
 
-    INSTRUMENT_DEFS.forEach(inst => {
-        if (!GameState.sequencer.tracks[inst.id]) {
-            GameState.sequencer.tracks[inst.id] = Array(16).fill(false);
-        }
-        if (inst.type === 'melodic' && (!GameState.sequencer.stepNotes[inst.id] || GameState.sequencer.stepNotes[inst.id].length < 16)) {
-            GameState.sequencer.stepNotes[inst.id] = DEFAULT_TRACK_NOTES[inst.id] ? [...DEFAULT_TRACK_NOTES[inst.id]] : Array(16).fill('C4');
-        }
-    });
+    ensureSequencerCapacity();
 
     if (!GameState.sequencer.activePresetLoaded) {
         loadSequencerPreset(GameState.sequencer.activePreset || 'house');
         GameState.sequencer.activePresetLoaded = true;
+    } else {
+        calculateGrooveBonus();
     }
 }
 
@@ -408,9 +686,15 @@ function loadSequencerPreset(presetKey) {
     GameState.sequencer.bpm = preset.bpm;
     GameState.sequencer.activePreset = presetKey;
 
+    ensureSequencerCapacity();
+
     INSTRUMENT_DEFS.forEach(inst => {
         if (preset[inst.id]) {
-            GameState.sequencer.tracks[inst.id] = [...preset[inst.id]];
+            const arr = Array(32).fill(false);
+            for (let i = 0; i < preset[inst.id].length && i < 32; i++) {
+                arr[i] = preset[inst.id][i];
+            }
+            GameState.sequencer.tracks[inst.id] = arr;
         }
     });
 
@@ -424,8 +708,10 @@ function loadSequencerPreset(presetKey) {
  * Bascule l'état d'un pas (active / désactive).
  */
 function toggleSequencerStep(trackName, stepIndex) {
-    if (!GameState.sequencer || !GameState.sequencer.tracks[trackName]) return;
-    if (!isInstrumentUnlocked(trackName)) return; // Verrouillé
+    if (!GameState.sequencer) initSequencer();
+    ensureSequencerCapacity();
+    if (!GameState.sequencer.tracks[trackName]) return;
+    if (!isInstrumentUnlocked(trackName)) return;
 
     initAudio();
     GameState.sequencer.tracks[trackName][stepIndex] = !GameState.sequencer.tracks[trackName][stepIndex];
@@ -445,8 +731,9 @@ function toggleSequencerStep(trackName, stepIndex) {
  */
 function clearSequencer() {
     if (!GameState.sequencer) return;
+    ensureSequencerCapacity();
     for (const track in GameState.sequencer.tracks) {
-        GameState.sequencer.tracks[track] = Array(16).fill(false);
+        GameState.sequencer.tracks[track] = Array(32).fill(false);
     }
     calculateGrooveBonus();
     if (typeof updateSequencerUI === 'function') {
@@ -491,27 +778,119 @@ function setSequencerBpm(newBpm) {
 }
 
 /**
- * Calcule le bonus passif de Groove conféré par le séquenceur (jusqu'à +120% de production selon les instruments débloqués).
+ * Évaluation Musicale Intelligente du Séquenceur (Anti-Spam / Anti-Saturation) :
+ * Récompense l'aération rythmique, la synchronisation, la diversité mélodique et le groove musical,
+ * et pénalise lourdement le spam / remplissage aveugle de tous les boutons.
  */
 function calculateGrooveBonus() {
     if (!GameState.sequencer) return 1.0;
 
-    let activeStepsCount = 0;
-    let unlockedInstrumentsCount = 0;
+    const stepCount = getSequencerStepCount();
+    let unlockedCount = 0;
+    let activeTracksCount = 0;
+    let totalTrackScores = 0;
+    let totalActiveNotes = 0;
 
+    const tracks = GameState.sequencer.tracks || {};
+
+    // 1. Analyse par piste : Densité idéale, aération et diversité mélodique
     INSTRUMENT_DEFS.forEach(inst => {
-        if (isInstrumentUnlocked(inst.id)) {
-            unlockedInstrumentsCount++;
-            if (GameState.sequencer.tracks[inst.id]) {
-                activeStepsCount += GameState.sequencer.tracks[inst.id].filter(Boolean).length;
+        if (!isInstrumentUnlocked(inst.id)) return;
+        unlockedCount++;
+
+        const trackArr = tracks[inst.id] ? tracks[inst.id].slice(0, stepCount) : [];
+        const activeSteps = trackArr.filter(Boolean).length;
+        totalActiveNotes += activeSteps;
+
+        if (activeSteps === 0) return; // Piste muette, neutre
+
+        activeTracksCount++;
+        const density = activeSteps / stepCount; // 0.0 à 1.0
+
+        // Modèle de densité musicale (Sweet spot : 15% à 40% de notes actives par piste)
+        let densityScore = 1.0;
+        if (density >= 0.15 && density <= 0.40) {
+            densityScore = 1.0; // Idéal (groove aéré, respiration rythmique)
+        } else if (density < 0.15) {
+            densityScore = 0.5 + (density / 0.15) * 0.5; // Minimal / ambiant
+        } else if (density <= 0.55) {
+            densityScore = 1.0 - ((density - 0.40) / 0.15) * 0.25; // Bon
+        } else {
+            // Surcharge / Spam (> 55% de notes sur la même piste)
+            // Plus on remplit aveuglément, plus le score s'effondre
+            const over = (density - 0.55) / 0.45; // 0 à 1
+            densityScore = Math.max(0.05, 0.75 - Math.pow(over, 1.5) * 0.70);
+        }
+
+        // Richesse mélodique pour les instruments polyphoniques (variété de notes)
+        let melodicBonus = 1.0;
+        if (inst.type === 'melodic' && activeSteps >= 2) {
+            const noteSet = new Set();
+            for (let i = 0; i < stepCount; i++) {
+                if (trackArr[i]) {
+                    noteSet.add(getSequencerStepNote(inst.id, i));
+                }
+            }
+            if (noteSet.size >= 4) {
+                melodicBonus = 1.25; // Richesse harmonique élevée
+            } else if (noteSet.size >= 2) {
+                melodicBonus = 1.12; // Phrase mélodique variée
+            } else {
+                melodicBonus = 0.85; // Monotone (toujours la même note répétée)
             }
         }
+
+        totalTrackScores += (densityScore * melodicBonus);
     });
 
-    // Chaque instrument débloqué augmente le potentiel max de groove (+15% par instrument débloqué)
-    const maxBonus = unlockedInstrumentsCount * 0.15;
-    const ratio = Math.min(1.0, activeStepsCount / (unlockedInstrumentsCount * 8 || 1));
-    GameState.sequencer.grooveBonus = ratio * maxBonus;
+    if (activeTracksCount === 0) {
+        GameState.sequencer.grooveBonus = 0;
+        GameState.sequencer.musicalityScore = 0;
+        GameState.sequencer.grooveStatus = 'Silencieux';
+        return 1.0;
+    }
+
+    // Score moyen de qualité musicale des pistes actives (0.0 à 1.25)
+    const avgTrackQuality = totalTrackScores / activeTracksCount;
+
+    // 2. Analyse de synergie globale & pénalité de cacophonie polyphonique
+    // Mesure la superposition simultanée : si 6+ instruments jouent en permanence sur chaque pas = vacarme
+    let totalCollisions = 0;
+    for (let s = 0; s < stepCount; s++) {
+        let simultaneousHits = 0;
+        INSTRUMENT_DEFS.forEach(inst => {
+            if (isInstrumentUnlocked(inst.id) && tracks[inst.id] && tracks[inst.id][s]) {
+                simultaneousHits++;
+            }
+        });
+        if (simultaneousHits >= 5) {
+            totalCollisions += (simultaneousHits - 4);
+        }
+    }
+
+    const collisionPenalty = Math.max(0.2, 1.0 - (totalCollisions / (stepCount * 2)));
+
+    // 3. Score final de musicalité normalisé (0% à 100%)
+    const rawMusicality = Math.min(1.0, avgTrackQuality * collisionPenalty);
+    const musicalityPercent = Math.round(rawMusicality * 100);
+    GameState.sequencer.musicalityScore = musicalityPercent;
+
+    // Potentiel maximum de bonus débloqué (+12% par instrument possédé, jusqu'à +156% au studio max)
+    const maxBonusMultiplier = unlockedCount * 0.12;
+
+    // Multiplicateur effectif appliqué à la production
+    GameState.sequencer.grooveBonus = rawMusicality * maxBonusMultiplier;
+
+    // Statut qualitatif clair pour le joueur
+    if (rawMusicality >= 0.85) {
+        GameState.sequencer.grooveStatus = '✨ Groove Exceptionnel';
+    } else if (rawMusicality >= 0.65) {
+        GameState.sequencer.grooveStatus = '🎵 Rythme Équilibré';
+    } else if (rawMusicality >= 0.40) {
+        GameState.sequencer.grooveStatus = '🎼 Ambiance Minimaliste';
+    } else {
+        GameState.sequencer.grooveStatus = '⚠️ Surchargé / Bruit (Aérez les pas)';
+    }
 
     return 1 + GameState.sequencer.grooveBonus;
 }
@@ -524,21 +903,22 @@ function runSequencerLoop() {
 
     const now = performance.now();
     const stepDurationMs = (60 / GameState.sequencer.bpm / 4) * 1000;
+    const stepCount = getSequencerStepCount();
 
     if (now - lastStepTime >= stepDurationMs) {
         lastStepTime = now;
         executeSequencerStep(GameState.sequencer.currentStep);
-        GameState.sequencer.currentStep = (GameState.sequencer.currentStep + 1) % 16;
+        GameState.sequencer.currentStep = (GameState.sequencer.currentStep + 1) % stepCount;
     }
 
     sequencerTimer = requestAnimationFrame(runSequencerLoop);
 }
 
 /**
- * Exécute un pas du séquenceur pour tous les instruments débloqués.
+ * Exécute un pas du séquenceur pour tous les instruments débloqués avec récompense musicale harmonieuse.
  */
 function executeSequencerStep(step) {
-    const tracks = GameState.sequencer.tracks;
+    const tracks = GameState.sequencer.tracks || {};
     let hitCount = 0;
 
     INSTRUMENT_DEFS.forEach(inst => {
@@ -550,15 +930,22 @@ function executeSequencerStep(step) {
 
     if (hitCount > 0) {
         const passive = typeof getPassiveProduction === 'function' ? getPassiveProduction() : 10;
-        const grooveReward = Math.max(1, (passive * 0.03) * hitCount);
-        addMoney(grooveReward);
-        addFame(0.01 * hitCount);
-        increaseHype(1 * hitCount);
+        
+        // Récompense calibrée sur la qualité musicale du groove (non sur le spam de boutons)
+        const musicalQuality = (GameState.sequencer && GameState.sequencer.musicalityScore) 
+            ? (GameState.sequencer.musicalityScore / 100) 
+            : 0.8;
 
-        GameState.stats.sequencerBeatsPlayed = (GameState.stats.sequencerBeatsPlayed || 0) + hitCount;
+        // Récompense par pas : forte sur les rythmes musicaux aérés, minimale en cas de vacarme
+        const grooveReward = Math.max(1, (passive * 0.02) * (1 + musicalQuality * 1.5));
+        addMoney(grooveReward);
+        addFame(0.01 * musicalQuality);
+        increaseHype(1 + Math.round(musicalQuality * 2));
+
+        GameState.stats.sequencerBeatsPlayed = (GameState.stats.sequencerBeatsPlayed || 0) + 1;
 
         if (typeof advanceQuestProgress === 'function') {
-            advanceQuestProgress('seq_beats', hitCount);
+            advanceQuestProgress('seq_beats', 1);
         }
     }
 
@@ -576,3 +963,4 @@ function playTrackSound(trackName, noteIdx = 0) {
         def.play(noteIdx);
     }
 }
+

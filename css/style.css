@@ -2218,16 +2218,113 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
+    flex-wrap: wrap;
 }
 
 .seq-groove-badge {
     font-family: var(--font-mono);
     font-size: 0.72rem;
+    font-weight: 700;
     background: rgba(0, 255, 136, 0.15);
     color: var(--neon-green);
-    padding: 2px 8px;
+    padding: 3px 10px;
     border-radius: var(--radius-full);
     border: 1px solid rgba(0, 255, 136, 0.3);
+    transition: all 0.25s ease;
+    box-shadow: 0 0 8px rgba(0, 255, 136, 0.15);
+}
+
+.seq-groove-badge.perfect {
+    background: rgba(0, 255, 136, 0.22);
+    color: #39ffb4;
+    border-color: rgba(0, 255, 136, 0.6);
+    box-shadow: 0 0 14px rgba(0, 255, 136, 0.4);
+}
+
+.seq-groove-badge.balanced {
+    background: rgba(0, 242, 254, 0.18);
+    color: var(--neon-cyan);
+    border-color: rgba(0, 242, 254, 0.5);
+    box-shadow: 0 0 10px rgba(0, 242, 254, 0.25);
+}
+
+.seq-groove-badge.warning {
+    background: rgba(255, 152, 0, 0.20);
+    color: #ffb74d;
+    border-color: rgba(255, 152, 0, 0.6);
+    box-shadow: 0 0 12px rgba(255, 152, 0, 0.35);
+    animation: pulse-border 2s infinite ease-in-out;
+}
+
+/* Barre de signature temporelle & Choix de la boucle (2, 4, 8, 16, 32 pas) */
+.seq-time-signature-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 6px 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: var(--radius-sm);
+}
+
+.seq-step-length-group, .seq-measure-nav {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.seq-time-label {
+    font-family: var(--font-heading);
+    font-size: 0.68rem;
+    font-weight: 800;
+    color: var(--text-dim);
+    letter-spacing: 0.5px;
+}
+
+.seq-step-pills, .seq-measure-pills {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(0, 0, 0, 0.35);
+    padding: 2px 4px;
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.seq-step-pill, .seq-page-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 0.70rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    white-space: nowrap;
+}
+
+.seq-step-pill:hover, .seq-page-btn:hover {
+    color: var(--text-main);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.seq-step-pill.active {
+    background: linear-gradient(135deg, rgba(0, 242, 254, 0.3), rgba(121, 40, 202, 0.4));
+    color: #fff;
+    border-color: var(--neon-cyan);
+    box-shadow: 0 0 10px rgba(0, 242, 254, 0.35);
+}
+
+.seq-page-btn.active {
+    background: linear-gradient(135deg, rgba(255, 0, 127, 0.3), rgba(255, 152, 0, 0.4));
+    color: #fff;
+    border-color: var(--neon-magenta);
+    box-shadow: 0 0 10px rgba(255, 0, 127, 0.35);
 }
 
 .seq-controls-row {
@@ -2342,13 +2439,34 @@ body {
     justify-content: flex-start;
 }
 
+/* Grilles adaptatives pour 2, 4, 8, 16 ou 32 pas */
 .steps-row {
     display: grid;
-    grid-template-columns: repeat(16, minmax(0, 1fr));
     gap: 4px;
     flex: 1 1 auto;
     width: 100%;
     align-items: center;
+}
+
+.steps-row.steps-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.steps-row.steps-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.steps-row.steps-8 {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+}
+
+.steps-row.steps-16, .steps-row.steps-32.view-1, .steps-row.steps-32.view-2 {
+    grid-template-columns: repeat(16, minmax(0, 1fr));
+}
+
+.steps-row.steps-32.view-all {
+    grid-template-columns: repeat(32, minmax(0, 1fr));
+    gap: 2px;
 }
 
 .step-btn {
@@ -2365,8 +2483,13 @@ body {
 }
 
 .step-btn.downbeat {
-    border-left: 2px solid rgba(255, 255, 255, 0.3);
+    border-left: 2px solid rgba(255, 255, 255, 0.35);
     background: rgba(255, 255, 255, 0.09);
+}
+
+.step-btn.measure-start {
+    border-left: 3px solid var(--neon-magenta) !important;
+    box-shadow: -2px 0 6px rgba(255, 0, 127, 0.35);
 }
 
 .step-btn:hover {

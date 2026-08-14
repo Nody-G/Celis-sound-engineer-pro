@@ -195,12 +195,12 @@
                             </div>
                         </div>
 
-                        <!-- Mini-DAW : Séquenceur 16-Pas Interactif (13 Instruments) -->
+                        <!-- Mini-DAW : Séquenceur Multi-Temps Interactif (2, 4, 8, 16, 32 Pas) -->
                         <div class="sequencer-cockpit-box">
                             <div class="seq-header-bar">
                                 <div class="seq-title-wrap">
-                                    <span>🎹 SÉQUENCEUR 16-PAS (GROOVE ENGINE)</span>
-                                    <span class="seq-groove-badge" id="seq-groove-badge">Bonus Groove: +0%</span>
+                                    <span>🎹 SÉQUENCEUR POLYPHONIQUE (GROOVE & HARMONIE)</span>
+                                    <span class="seq-groove-badge" id="seq-groove-badge" title="Le moteur évalue l'harmonie et l'aération de votre rythme. Remplir toutes les notes crée du vacarme et réduit le bonus !">Bonus Groove: +0%</span>
                                 </div>
                                 <div class="seq-controls-row">
                                     <div class="seq-bpm-box">
@@ -219,7 +219,30 @@
                                 </div>
                             </div>
 
-                            <!-- Grille 16-Pas Dynamique (13 Instruments Déblocables) -->
+                            <!-- Barre de sélection intuitive du nombre de temps / pas -->
+                            <div class="seq-time-signature-bar">
+                                <div class="seq-step-length-group">
+                                    <span class="seq-time-label">⏱️ BOUCLE :</span>
+                                    <div class="seq-step-pills" id="seq-step-pills">
+                                        <button class="seq-step-pill" data-steps="2" title="Boucle ultra-courte de 2 pas (Rythme binaire)">2 Pas</button>
+                                        <button class="seq-step-pill" data-steps="4" title="1 Temps (4 double-croches)">4 Pas</button>
+                                        <button class="seq-step-pill" data-steps="8" title="Demi-mesure (8 pas / 2 temps)">8 Pas</button>
+                                        <button class="seq-step-pill active" data-steps="16" title="Mesure standard 4/4 (16 pas)">16 Pas (1 Mesure)</button>
+                                        <button class="seq-step-pill" data-steps="32" title="Double mesure complète (32 pas / 2 Mesures)">32 Pas (2 Mesures)</button>
+                                    </div>
+                                </div>
+
+                                <div class="seq-measure-nav" id="seq-measure-nav" style="display: none;">
+                                    <span class="seq-time-label">VUE :</span>
+                                    <div class="seq-measure-pills">
+                                        <button class="seq-page-btn active" data-page="all">Tout voir (1-32)</button>
+                                        <button class="seq-page-btn" data-page="1">Mesure 1 (1-16)</button>
+                                        <button class="seq-page-btn" data-page="2">Mesure 2 (17-32)</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Grille Multi-Pas Dynamique (13 Instruments Déblocables) -->
                             <div class="sequencer-matrix" id="sequencer-matrix"></div>
                         </div>
                     </div>

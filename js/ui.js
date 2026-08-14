@@ -183,14 +183,62 @@ function updateStudioBannerAndRack() {
 /**
  * Initialise le rendu visuel du Séquenceur 16-Pas avec instruments déblocables (Affichage progressif pur).
  */
+/**
+ * Initialise le rendu visuel du Séquenceur Multi-Temps avec instruments déblocables.
+ * Supporte dynamiquement les boucles de 2, 4, 8, 16 ou 32 pas / temps.
+ */
+let seqActivePage = 'all'; // 'all' | '1' | '2'
+
 function initSequencerUI() {
     const matrix = document.querySelector('.sequencer-matrix') || document.getElementById('sequencer-matrix');
     if (!matrix || typeof INSTRUMENT_DEFS === 'undefined') return;
 
+    const stepCount = typeof getSequencerStepCount === 'function' ? getSequencerStepCount() : 16;
     matrix.innerHTML = '';
+
+    // Mise à jour des boutons de choix de temps (pills)
+    const pills = document.querySelectorAll('.seq-step-pill');
+    pills.forEach(pill => {
+        const count = parseInt(pill.dataset.steps, 10);
+        if (count === stepCount) {
+            pill.classList.add('active');
+        } else {
+            pill.classList.remove('active');
+        }
+    });
+
+    // Affichage ou masquage de la navigation des mesures pour le mode 32 pas
+    const measureNav = document.getElementById('seq-measure-nav');
+    if (measureNav) {
+        measureNav.style.display = (stepCount === 32) ? 'flex' : 'none';
+        const pageBtns = measureNav.querySelectorAll('.seq-page-btn');
+        pageBtns.forEach(btn => {
+            if (btn.dataset.page === seqActivePage) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+    }
 
     const unlockedInsts = INSTRUMENT_DEFS.filter(inst => isInstrumentUnlocked(inst.id));
     const nextLocked = INSTRUMENT_DEFS.find(inst => !isInstrumentUnlocked(inst.id));
+
+    // Détermination de la plage de pas à afficher
+    let startStep = 0;
+    let endStep = stepCount;
+    if (stepCount === 32) {
+        if (seqActivePage === '1') {
+            startStep = 0;
+            endStep = 16;
+        } else if (seqActivePage === '2') {
+            startStep = 16;
+            endStep = 32;
+        } else {
+            startStep = 0;
+            endStep = 32;
+        }
+    }
 
     // Rendu exclusif des pistes d'instruments débloquées
     unlockedInsts.forEach(inst => {
@@ -202,7 +250,7 @@ function initSequencerUI() {
             <button class="track-tag ${inst.color || 'cyan'}" title="Cliquez pour écouter ${inst.name}">
                 ${inst.icon} ${inst.tag}
             </button>
-            <div class="steps-row" id="steps-${inst.id}"></div>
+            <div class="steps-row steps-${stepCount} view-${seqActivePage}" id="steps-${inst.id}"></div>
         `;
 
         const tagBtn = row.querySelector('.track-tag');
@@ -214,9 +262,13 @@ function initSequencerUI() {
         }
 
         const stepsContainer = row.querySelector('.steps-row');
-        for (let i = 0; i < 16; i++) {
+        for (let i = startStep; i < endStep; i++) {
             const stepBtn = document.createElement('button');
-            stepBtn.className = `step-btn ${i % 4 === 0 ? 'downbeat' : ''}`;
+            
+            // Classes musicales pour les temps forts et changements de mesure
+            const isDownbeat = (i % 4 === 0);
+            const isMeasureStart = (i === 16);
+            stepBtn.className = `step-btn ${isDownbeat ? 'downbeat' : ''} ${isMeasureStart ? 'measure-start' : ''}`;
             stepBtn.dataset.track = inst.id;
             stepBtn.dataset.step = i;
 
@@ -228,6 +280,16 @@ function initSequencerUI() {
                     stepBtn.innerHTML = `<span class="step-note-txt">${note}</span>`;
                 }
             }
+
+            // Calcul du repère métrique pour l'infobulle
+            const measureNum = Math.floor(i / 16) + 1;
+            const beatNum = Math.floor((i % 16) / 4) + 1;
+            const subBeat = (i % 4) + 1;
+            const timeLabel = (stepCount >= 16) 
+                ? `Mesure ${measureNum} • Temps ${beatNum}.${subBeat} (Pas ${i + 1})`
+                : `Temps ${beatNum}.${subBeat} (Pas ${i + 1}/${stepCount})`;
+
+            stepBtn.title = `${inst.name} [${timeLabel}]`;
 
             // Clic gauche : Activer / Désactiver
             stepBtn.addEventListener('click', (e) => {
@@ -279,10 +341,12 @@ function initSequencerUI() {
 }
 
 /**
- * Met à jour les pas du séquenceur.
+ * Met à jour les pas du séquenceur et l'évaluation musicale du groove.
  */
 function updateSequencerUI() {
     if (!GameState.sequencer || typeof INSTRUMENT_DEFS === 'undefined') return;
+
+    const stepCount = typeof getSequencerStepCount === 'function' ? getSequencerStepCount() : 16;
 
     INSTRUMENT_DEFS.forEach(inst => {
         const isUnlocked = typeof isInstrumentUnlocked === 'function' ? isInstrumentUnlocked(inst.id) : true;
@@ -292,24 +356,33 @@ function updateSequencerUI() {
         if (!row) return;
 
         const buttons = row.querySelectorAll('.step-btn');
-        buttons.forEach((btn, idx) => {
-            const isActive = GameState.sequencer.tracks[inst.id] && GameState.sequencer.tracks[inst.id][idx];
+        buttons.forEach(btn => {
+            const stepIdx = parseInt(btn.dataset.step, 10);
+            const isActive = GameState.sequencer.tracks[inst.id] && GameState.sequencer.tracks[inst.id][stepIdx];
+            
+            const measureNum = Math.floor(stepIdx / 16) + 1;
+            const beatNum = Math.floor((stepIdx % 16) / 4) + 1;
+            const subBeat = (stepIdx % 4) + 1;
+            const timeLabel = (stepCount >= 16) 
+                ? `M${measureNum} T${beatNum}.${subBeat}` 
+                : `T${beatNum}.${subBeat}`;
+
             if (isActive) {
                 btn.classList.add('active');
                 if (inst.type === 'melodic') {
-                    const note = getSequencerStepNote(inst.id, idx);
+                    const note = getSequencerStepNote(inst.id, stepIdx);
                     btn.innerHTML = `<span class="step-note-txt">${note}</span>`;
-                    btn.title = `${inst.name} [Pas ${idx + 1}] : Note ${note}\n• Clic gauche : On/Off\n• Clic droit : Changer la note\n• Molette : Transposer (±1)`;
+                    btn.title = `${inst.name} [${timeLabel}] : Note ${note}\n• Clic gauche : On/Off\n• Clic droit : Changer la note\n• Molette : Transposer (±1)`;
                 } else {
                     btn.innerHTML = '';
-                    btn.title = `${inst.name} [Pas ${idx + 1}]`;
+                    btn.title = `${inst.name} [${timeLabel}] : Actif`;
                 }
             } else {
                 btn.classList.remove('active');
                 btn.innerHTML = '';
                 btn.title = inst.type === 'melodic' 
-                    ? `${inst.name} [Pas ${idx + 1}]\n• Clic gauche : Activer\n• Clic droit : Choisir la note`
-                    : `${inst.name} [Pas ${idx + 1}]`;
+                    ? `${inst.name} [${timeLabel}]\n• Clic gauche : Activer\n• Clic droit : Choisir la note`
+                    : `${inst.name} [${timeLabel}]`;
             }
         });
     });
@@ -320,8 +393,25 @@ function updateSequencerUI() {
         INSTRUMENT_DEFS.forEach(inst => {
             if (isInstrumentUnlocked(inst.id)) unlockedCount++;
         });
+
         const bonusPct = Math.round((GameState.sequencer.grooveBonus || 0) * 100);
-        grooveBadge.textContent = `Bonus Groove: +${bonusPct}% Prod (${unlockedCount}/${INSTRUMENT_DEFS.length} Instruments)`;
+        const musicalScore = GameState.sequencer.musicalityScore !== undefined ? GameState.sequencer.musicalityScore : 80;
+        const status = GameState.sequencer.grooveStatus || 'Équilibré';
+
+        grooveBadge.className = 'seq-groove-badge';
+        if (musicalScore >= 80) {
+            grooveBadge.classList.add('perfect');
+            grooveBadge.textContent = `✨ Groove: +${bonusPct}% Prod (${musicalScore}% Harmonie)`;
+        } else if (musicalScore >= 50) {
+            grooveBadge.classList.add('balanced');
+            grooveBadge.textContent = `🎵 Groove: +${bonusPct}% Prod (${musicalScore}% Musical)`;
+        } else if (musicalScore === 0) {
+            grooveBadge.textContent = `Bonus Groove: +0% (Grille Silencieuse)`;
+        } else {
+            grooveBadge.classList.add('warning');
+            grooveBadge.textContent = `⚠️ +${bonusPct}% Prod (${status})`;
+        }
+        grooveBadge.title = `Bonus de production de votre composition : +${bonusPct}%\nQualité Musicale : ${musicalScore}%\n(Astuce : un rythme structuré et aéré rapporte le maximum de bonus ; remplir toutes les notes sans espace provoque du vacarme et réduit le bonus !)`;
     }
 
     const presetSelect = document.getElementById('seq-preset-select');
@@ -1763,6 +1853,26 @@ function initUI() {
             setSequencerBpm(e.target.value);
         });
     }
+
+    // Sélecteurs de boucle temporelle du Séquenceur (2, 4, 8, 16, 32 Pas)
+    const seqStepPills = document.querySelectorAll('.seq-step-pill');
+    seqStepPills.forEach(pill => {
+        pill.addEventListener('click', () => {
+            const steps = parseInt(pill.dataset.steps, 10);
+            if (typeof setSequencerStepCount === 'function') {
+                setSequencerStepCount(steps);
+            }
+        });
+    });
+
+    // Sélecteurs de mesure du Séquenceur (Mesure 1, Mesure 2, Tout voir)
+    const seqPageBtns = document.querySelectorAll('.seq-page-btn');
+    seqPageBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            seqActivePage = btn.dataset.page || 'all';
+            initSequencerUI();
+        });
+    });
 
     // Sélecteurs de mode de Visualiseur Canvas
     const visModeButtons = document.querySelectorAll('.vis-mode-btn');
