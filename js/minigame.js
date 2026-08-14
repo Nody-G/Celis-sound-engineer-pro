@@ -418,73 +418,7 @@ function updateHype(deltaTime) {
     }
 }
 
-/**
- * Mini-Jeu Mastering EQ : Calcule l'alignement et applique le bonus (coût : 20 ⚡).
- */
-function testMasteringEQ() {
-    const MASTERING_ENERGY_COST = 20;
-    if (!hasEnoughEnergy(MASTERING_ENERGY_COST)) {
-        return { success: false, reason: `Énergie insuffisante (${MASTERING_ENERGY_COST} ⚡ requis)` };
-    }
 
-    spendEnergy(MASTERING_ENERGY_COST);
-
-    if (!GameState.mastering) {
-        GameState.mastering = { targetLow: 60, targetMid: 40, targetHigh: 75, currentLow: 50, currentMid: 50, currentHigh: 50, activeBonus: 1.0, bonusTimeLeft: 0 };
-    }
-
-    const m = GameState.mastering;
-    const diffLow = Math.abs(m.targetLow - m.currentLow);
-    const diffMid = Math.abs(m.targetMid - m.currentMid);
-    const diffHigh = Math.abs(m.targetHigh - m.currentHigh);
-    const totalDiff = diffLow + diffMid + diffHigh; // 0 (parfait) à 300 (terrible)
-
-    let accuracy = Math.max(0, Math.min(100, Math.round(100 - (totalDiff / 1.5))));
-    let bonusMult = 1.0;
-
-    if (accuracy >= 90) {
-        bonusMult = 2.5; // +150% production
-    } else if (accuracy >= 70) {
-        bonusMult = 1.8; // +80% production
-    } else if (accuracy >= 50) {
-        bonusMult = 1.3; // +30% production
-    } else {
-        bonusMult = 1.1;
-    }
-
-    const duration = (typeof isUpgradeBought === 'function' && isUpgradeBought('mastering_ai')) ? 120 : 60;
-    m.activeBonus = bonusMult;
-    m.bonusTimeLeft = duration;
-
-    // Génère de nouvelles cibles aléatoires pour le prochain essai
-    m.targetLow = Math.floor(Math.random() * 80) + 10;
-    m.targetMid = Math.floor(Math.random() * 80) + 10;
-    m.targetHigh = Math.floor(Math.random() * 80) + 10;
-
-    if (typeof playContractSound === 'function') {
-        playContractSound();
-    }
-    return {
-        success: true,
-        accuracy: accuracy,
-        multiplier: bonusMult,
-        duration: duration
-    };
-}
-
-/**
- * Met à jour le timer du bonus de Mastering.
- */
-function updateMasteringBonus(deltaTime) {
-    if (!GameState.mastering) return;
-    if (GameState.mastering.bonusTimeLeft > 0) {
-        GameState.mastering.bonusTimeLeft -= deltaTime;
-        if (GameState.mastering.bonusTimeLeft <= 0) {
-            GameState.mastering.activeBonus = 1.0;
-            GameState.mastering.bonusTimeLeft = 0;
-        }
-    }
-}
 
 /**
  * Planifie l'apparition du prochain Vinyle Doré flottant (entre 45s et 90s, ou 22s-45s avec Aimant Doré).

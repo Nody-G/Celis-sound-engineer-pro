@@ -42,14 +42,11 @@ const GameState = {
         tracksMixed: 0,        // Nombre total de morceaux mixés manuellement
         totalMoneyEarned: 0,   // Argent cumulé gagné à vie
         totalFameEarned: 0,    // Renommée cumulée gagnée à vie
-        contractsCompleted: 0, // Nombre de contrats réussis
         boostersUsed: 0,       // Nombre de boosters activés
         eventsEncountered: 0,  // Événements aléatoires rencontrés
         upgradesUnlocked: 0,   // Talents R&D débloqués
-        albumsReleased: 0,     // Albums & Hits publiés
         goldenVinylsClicked: 0,// Vinyles dorés attrapés
         playtimeSeconds: 0,    // Temps de jeu total en secondes
-        artistMissionsDone: 0, // Missions d'artistes accomplies
         questsCompleted: 0,    // Quêtes complétées
         sequencerBeatsPlayed: 0,// Pas joués au séquenceur
     },
@@ -60,30 +57,8 @@ const GameState = {
     // Améliorations de Studio / R&D achetées (id -> true)
     upgrades: {},
 
-    // Contrats complétés (id -> true)
-    contractsCompleted: {},
-
     // Succès débloqués (id -> true)
     achievementsUnlocked: {},
-
-    // Discographie (liste des albums / morceaux sortis)
-    discography: {
-        albums: [],         // Liste des albums produits
-        totalStreams: 0,
-        royaltiesPerSec: 0,
-    },
-
-    // Mini-Jeu Mastering EQ Lab
-    mastering: {
-        targetLow: 60,
-        targetMid: 40,
-        targetHigh: 75,
-        currentLow: 50,
-        currentMid: 50,
-        currentHigh: 50,
-        activeBonus: 1.0,   // Multiplicateur actif (ex: 1.5x)
-        bonusTimeLeft: 0,   // Durée restante en secondes
-    },
 
     // Séquenceur 16-Pas (Mini-DAW)
     sequencer: {
@@ -115,22 +90,6 @@ const GameState = {
             brass:   ['A3', 'B3', 'C4', 'D4', 'E4', 'F#4', 'G4', 'A4'],
             cosmic:  ['A3', 'C4', 'E4', 'G4', 'B4', 'D5', 'F#5', 'A5']
         }
-    },
-
-    // Label & Gestion d'Artistes
-    artists: {
-        signed: [],         // Artistes sous contrat
-        available: [],      // Artistes disponibles au recrutement
-        lastRefresh: 0,     // Heure du dernier rafraîchissement
-        maxSigned: 4,       // Capacité max de l'écurie
-    },
-
-    // Billboard Top 50 & Galerie des Trophées
-    billboard: {
-        chart: [],          // Top 50 mondial
-        week: 1,
-        myPeakRank: 50,
-        trophies: {},       // id -> boolean / date
     },
 
     // Quêtes Quotidiennes & Défis
@@ -207,37 +166,18 @@ function resetGameState() {
         tracksMixed: 0,
         totalMoneyEarned: 0,
         totalFameEarned: 0,
-        contractsCompleted: 0,
         boostersUsed: 0,
         eventsEncountered: 0,
         upgradesUnlocked: 0,
-        albumsReleased: 0,
         goldenVinylsClicked: 0,
         playtimeSeconds: 0,
-        artistMissionsDone: 0,
         questsCompleted: 0,
         sequencerBeatsPlayed: 0,
     };
 
     GameState.equipment = {};
     GameState.upgrades = {};
-    GameState.contractsCompleted = {};
     GameState.achievementsUnlocked = {};
-    GameState.discography = {
-        albums: [],
-        totalStreams: 0,
-        royaltiesPerSec: 0,
-    };
-    GameState.mastering = {
-        targetLow: 60,
-        targetMid: 40,
-        targetHigh: 75,
-        currentLow: 50,
-        currentMid: 50,
-        currentHigh: 50,
-        activeBonus: 1.0,
-        bonusTimeLeft: 0,
-    };
     GameState.sequencer = {
         isPlaying: false,
         bpm: 124,
@@ -265,18 +205,6 @@ function resetGameState() {
             brass:   ['A3', 'B3', 'C4', 'D4', 'E4', 'F#4', 'G4', 'A4'],
             cosmic:  ['A3', 'C4', 'E4', 'G4', 'B4', 'D5', 'F#5', 'A5']
         }
-    };
-    GameState.artists = {
-        signed: [],
-        available: [],
-        lastRefresh: 0,
-        maxSigned: 4,
-    };
-    GameState.billboard = {
-        chart: [],
-        week: 1,
-        myPeakRank: 50,
-        trophies: {},
     };
     GameState.quests = {
         daily: [],
@@ -306,7 +234,7 @@ function resetGameState() {
 }
 
 /**
- * Réinitialise l'état du jeu pour un Prestige (conserve points, trophées & arbre de prestige).
+ * Réinitialise l'état du jeu pour un Prestige (conserve points, cassettes & arbre de prestige).
  */
 function resetForPrestige() {
     const lifetimeFame = GameState.prestige.lifetimeFame;
@@ -314,7 +242,6 @@ function resetForPrestige() {
     const spentPoints = GameState.prestige.spentPoints || 0;
     const totalPrestiges = GameState.prestige.totalPrestiges;
     const tree = { ...GameState.prestige.tree };
-    const trophies = { ...(GameState.billboard ? GameState.billboard.trophies : {}) };
     const goldenCassettes = GameState.resources ? (GameState.resources.goldenCassettes || 0) : 0;
     const perks = { ...(GameState.quests ? GameState.quests.perks : {}) };
     const redeemedCodes = { ...(GameState.secretCodes ? GameState.secretCodes.redeemed : {}) };
@@ -331,7 +258,6 @@ function resetForPrestige() {
     };
     GameState.resources.goldenCassettes = goldenCassettes;
     if (GameState.quests) GameState.quests.perks = perks;
-    if (GameState.billboard) GameState.billboard.trophies = trophies;
     if (GameState.secretCodes) GameState.secretCodes.redeemed = redeemedCodes;
     GameState.settings = settings;
 
@@ -342,7 +268,7 @@ function resetForPrestige() {
 }
 
 /**
- * Calcule tous les bonus passifs du Prestige, de l'arbre de spécialisation et des trophées de disques.
+ * Calcule tous les bonus passifs du Prestige et de l'arbre de spécialisation.
  */
 function getPrestigeBonuses() {
     const tree = GameState.prestige.tree || { soundMastery: 0, businessEmpire: 0, hypeOverdrive: 0 };
@@ -351,25 +277,12 @@ function getPrestigeBonuses() {
     // Bonus de base des points non dépensés (+5% prod par point)
     const baseMult = 1 + (unspentPoints * 0.05);
 
-    // Multiplicateurs issus des Trophées Billboard débloqués
-    let trophyProductionMult = 1.0;
-    let trophyRoyaltiesMult = 1.0;
-    if (GameState.billboard && GameState.billboard.trophies) {
-        if (GameState.billboard.trophies['silver_disc']) trophyProductionMult *= 1.15; // +15%
-        if (GameState.billboard.trophies['gold_disc']) trophyProductionMult *= 1.30;   // +30%
-        if (GameState.billboard.trophies['plat_disc']) trophyProductionMult *= 1.50;   // +50%
-        if (GameState.billboard.trophies['diam_disc']) trophyProductionMult *= 2.00;   // +100%
-        if (GameState.billboard.trophies['grammy_win']) trophyProductionMult *= 2.50;  // +150%
-        if (GameState.billboard.trophies['streaming_billion']) trophyRoyaltiesMult *= 1.50; // +50% royalties
-    }
-
     return {
-        productionMultiplier: baseMult * (1 + (tree.soundMastery || 0) * 0.20) * trophyProductionMult,
+        productionMultiplier: baseMult * (1 + (tree.soundMastery || 0) * 0.20),
         costReduction: Math.max(0.3, 1 - ((tree.businessEmpire || 0) * 0.08)),
         fameMultiplier: 1 + (unspentPoints * 0.05) + ((tree.businessEmpire || 0) * 0.15),
         clickMultiplier: 1 + ((tree.hypeOverdrive || 0) * 0.25),
         frenzyDurationBonus: (tree.hypeOverdrive || 0) * 3, // +3s par point
-        royaltiesMultiplier: (1 + ((tree.businessEmpire || 0) * 0.20)) * trophyRoyaltiesMult,
     };
 }
 

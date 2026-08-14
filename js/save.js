@@ -89,17 +89,8 @@ function mergeGameState(loaded) {
     if (loaded.upgrades) {
         GameState.upgrades = loaded.upgrades;
     }
-    if (loaded.contractsCompleted) {
-        GameState.contractsCompleted = loaded.contractsCompleted;
-    }
     if (loaded.achievementsUnlocked) {
         GameState.achievementsUnlocked = loaded.achievementsUnlocked;
-    }
-    if (loaded.discography) {
-        GameState.discography = { ...GameState.discography, ...loaded.discography };
-    }
-    if (loaded.mastering) {
-        GameState.mastering = { ...GameState.mastering, ...loaded.mastering };
     }
     if (loaded.sequencer) {
         GameState.sequencer = {
@@ -117,16 +108,6 @@ function mergeGameState(loaded) {
                 ...(GameState.padController ? GameState.padController.customNotes : {}),
                 ...(loaded.padController.customNotes || {})
             }
-        };
-    }
-    if (loaded.artists) {
-        GameState.artists = { ...GameState.artists, ...loaded.artists };
-    }
-    if (loaded.billboard) {
-        GameState.billboard = {
-            ...GameState.billboard,
-            ...loaded.billboard,
-            trophies: { ...(GameState.billboard.trophies || {}), ...(loaded.billboard.trophies || {}) }
         };
     }
     if (loaded.quests) {
@@ -163,10 +144,6 @@ function mergeGameState(loaded) {
         GameState.buyMultiplier = loaded.buyMultiplier;
     }
 
-    // Réapplication des capacités et bonus permanents
-    if (GameState.quests && GameState.quests.perks && GameState.quests.perks.label_expansion) {
-        if (GameState.artists) GameState.artists.maxSigned = 6;
-    }
     if (typeof recalculateMaxEnergy === 'function') {
         recalculateMaxEnergy();
     }
